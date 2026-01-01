@@ -3,81 +3,65 @@ import requests
 from datetime import datetime, timedelta
 import time
 
-def get_vn30_data():
-    # Danh sách 30 mã VN30 chuẩn
-    tickers = [
-        "ACB", "BCM", "BID", "BVH", "CTG", "FPT", "GAS", "GVR", "HDB", "HPG",
-        "MBB", "MSN", "MWG", "PLX", "POW", "SAB", "SHB", "SSB", "SSI", "STB",
-        "TCB", "TPB", "VCB", "VHM", "VIB", "VIC", "VNM", "VPB", "VRE", "VJC"
-    ]
-    
+def get_market_data():
+    # 30 mã VN30 hot nhất
+    tickers = ["ACB","BCM","BID","BVH","CTG","FPT","GAS","GVR","HDB","HPG","MBB","MSN","MWG","PLX","POW","SAB","SHB","SSB","SSI","STB","TCB","TPB","VCB","VHM","VIB","VIC","VNM","VPB","VRE","VJC"]
     results = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://google.com'
-    }
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
 
-    print(f"--- BẮT ĐẦU QUÉT DỮ LIỆU {len(tickers)} MÃ ---")
+    print(f"--- ĐANG QUÉT DỮ LIỆU LỊCH SỬ ---")
     
     for s in tickers:
         try:
-            # Sử dụng API của Vietstock/SSI thông qua lịch sử giá (ổn định hơn bảng điện realtime)
-            end_date = int(time.time())
-            start_date = end_date - (86400 * 10) # Lấy dữ liệu 10 ngày gần nhất
+            # Lấy dữ liệu 10 ngày gần nhất để đảm bảo có data kể cả ngày lễ
+            end_ts = int(time.time())
+            start_ts = end_ts - (86400 * 15) 
+            url = f"https://api.vietstock.vn/ta/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
             
-            url = f"https://api.vietstock.vn/ta/history?symbol={s}&resolution=D&from={start_date}&to={end_date}"
-            response = requests.get(url, headers=headers, timeout=15)
-            
-            if response.status_code == 200:
-                data = response.json()
+            res = requests.get(url, headers=headers, timeout=15)
+            if res.status_code == 200:
+                data = res.json()
                 if data and 'c' in data and len(data['c']) >= 2:
-                    curr_p = data['c'][-1]  # Giá đóng cửa hôm nay
-                    prev_p = data['c'][-2]  # Giá đóng cửa hôm qua
-                    change = round(((curr_p - prev_p) / prev_p) * 100, 2)
-                    vol = data['v'][-1] if 'v' in data: data['v'][-1] else 0
-
-                    # Thuật toán dự báo AI đơn giản
+                    prices = data['c']
+                    volumes = data['v']
+                    
+                    last_p = prices[-1] # Giá đóng cửa phiên gần nhất
+                    prev_p = prices[-2] # Giá đóng cửa phiên trước đó
+                    change = round(((last_p - prev_p) / prev_p) * 100, 2)
+                    
+                    # Thuật toán dự báo dựa trên biến động 3 phiên gần nhất
+                    avg_3 = sum(prices[-3:]) / 3
                     forecast = "THEO DÕI"
-                    conf = 60
-                    if change <= -2.0:
+                    conf = 65
+                    
+                    if last_p < avg_3 and change < -1:
                         forecast = "MUA"
                         conf = 85
-                    elif change >= 2.5:
+                    elif last_p > avg_3 and change > 1.5:
                         forecast = "BÁN"
                         conf = 80
-                    elif -0.5 <= change <= 0.5:
+                    elif abs(change) < 0.5:
                         forecast = "GIỮ"
-                        conf = 75
+                        conf = 70
 
                     results.append({
-                        "s": s, "p": curr_p, "c": change, "v": vol, "f": forecast, "conf": conf
+                        "s": s, "p": last_p, "c": change, 
+                        "v": volumes[-1], "f": forecast, "conf": conf
                     })
-                    print(f"[OK] {s}: {curr_p} ({change}%)")
-                else:
-                    print(f"[SKIP] {s}: Không đủ dữ liệu lịch sử")
-            else:
-                print(f"[FAIL] {s}: API lỗi {response.status_code}")
-                
-            # Nghỉ ngắn giữa các lần gọi để tránh bị chặn (Rate limit)
-            time.sleep(0.5)
-            
+                    print(f"[OK] {s}: {last_p} ({change}%)")
+            time.sleep(0.3) # Tránh bị chặn IP
         except Exception as e:
-            print(f"[ERROR] {s}: {str(e)}")
+            print(f"[LỖI] {s}: {str(e)}")
 
-    print(f"--- HOÀN TẤT: LẤY ĐƯỢC {len(results)}/{len(tickers)} MÃ ---")
-
-    # Chỉ ghi file nếu có ít nhất 1 mã để tránh ghi đè file rỗng lên Dashboard
-    if len(results) > 0:
-        final_data = {
+    if results:
+        final_output = {
             "update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            "forecast_for": (datetime.now() + timedelta(days=1)).strftime("%d/%m/%Y"),
+            "forecast_for": "Phiên kế tiếp",
             "stocks": sorted(results, key=lambda x: x['s'])
         }
         with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump(final_data, f, ensure_ascii=False, indent=2)
-        print("Đã cập nhật data.json thành công!")
-    else:
-        print("CẢNH BÁO: Không lấy được dữ liệu mới. Giữ nguyên data cũ.")
+            json.dump(final_output, f, ensure_ascii=False, indent=2)
+        print("Cập nhật thành công!")
 
 if __name__ == "__main__":
-    get_vn30_data()
+    get_market_data()

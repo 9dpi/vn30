@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VN30 Smart AI Dashboard</title>
+    <title>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
@@ -17,9 +17,9 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         
         /* Search & Filter Bar */
-        .search-bar { display: flex; gap: 10px; margin-bottom: 25px; }
-        .search-input { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 15px; border-radius: 12px; flex: 1; outline: none; }
-        .filter-select { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 12px; cursor: pointer; }
+        .controls-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .search-input { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 15px; border-radius: 12px; flex: 1; min-width: 250px; outline: none; }
+        .filter-select { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 12px; cursor: pointer; outline: none; }
 
         .market-stats { display: flex; gap: 15px; margin-bottom: 25px; }
         .stat-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; flex: 1; text-align: center; }
@@ -30,27 +30,24 @@
         th { background: #1a1f2e; padding: 15px; text-align: left; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
         
-        .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; cursor: pointer; } /* Thêm cursor */
-        .tag { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; display: inline-block; text-align: center; min-width: 110px; }
+        .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
+        .tag { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; display: inline-block; text-align: center; min-width: 100px; }
         .tag-MUA { background: rgba(34, 197, 94, 0.15); color: var(--up); border: 1px solid var(--up); }
         .tag-BÁN { background: rgba(239, 68, 68, 0.15); color: var(--down); border: 1px solid var(--down); }
         .tag-GIỮ { background: rgba(245, 158, 11, 0.15); color: var(--neutral); border: 1px solid var(--neutral); }
         .tag-DANG-PHAN-TICH { background: rgba(59, 130, 246, 0.1); color: var(--blue); border: 1px solid var(--blue); }
 
         .up { color: var(--up); } .down { color: var(--down); }
-        .btn-donate { background: #f368e0; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(243, 104, 224, 0.3); }
-        .btn-donate:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(243, 104, 224, 0.4); }
+        .btn-donate { background: #f368e0; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-donate:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(243, 104, 224, 0.4); }
 
-        /* Modal */
-        #donate-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; max-width: 320px; color: #1a1b1f; }
-        .modal-content img { width: 100%; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; }
-        .close-btn { background: #f1f2f6; border: none; padding: 10px 25px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-
-        /* Chart Modal */
-        #chart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1001; }
-        .chart-content { background: var(--card); padding: 25px; border-radius: 20px; text-align: center; width: 90%; max-width: 800px; height: 70%; display: flex; flex-direction: column; }
-        #stockChart { flex-grow: 1; } /* Biểu đồ chiếm hết không gian */
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; max-width: 320px; color: #1a1b1f; position: relative; }
+        .modal-content img { width: 100%; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; }
+        
+        .chart-modal-content { background: var(--card); padding: 20px; border-radius: 20px; width: 100%; max-width: 900px; border: 1px solid var(--border); }
+        .close-btn { background: #f1f2f6; border: none; padding: 10px 25px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -58,17 +55,17 @@
         <div class="header">
             <div>
                 <h1 style="margin:0; font-size: 1.6rem; letter-spacing: -1px;">VN30 <span style="color:var(--blue)">TOP MOVERS</span></h1>
-                <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Đang tải dữ liệu...</div>
+                <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Cập nhật: --</div>
             </div>
             <div style="display: flex; gap: 12px; align-items: center;">
-                <button class="btn-donate" onclick="toggleModal(true, 'donate')">☕ Mời cafe ❤️</button>
+                <button class="btn-donate" onclick="openModal('donate')">☕ Mời cafe ❤️</button>
                 <span id="forecast-target" style="background: var(--blue); padding: 5px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">--</span>
             </div>
         </div>
 
-        <div class="search-bar">
-            <input type="text" id="searchInput" class="search-input" placeholder="Tìm mã CP (ví dụ: FPT, VCB...)" onkeyup="filterTable()">
-            <select id="filterSelect" class="filter-select" onchange="filterTable()">
+        <div class="controls-bar">
+            <input type="text" id="searchInput" class="search-input" placeholder="Tìm mã CP hoặc lọc biến động..." onkeyup="filterAndRender()">
+            <select id="filterSelect" class="filter-select" onchange="filterAndRender()">
                 <option value="ALL">Tất cả dự báo</option>
                 <option value="MUA">Khuyến nghị MUA</option>
                 <option value="BÁN">Khuyến nghị BÁN</option>
@@ -78,16 +75,16 @@
         </div>
 
         <div class="market-stats">
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">TOP BIẾN ĐỘNG</div><div class="stat-val" id="top-ticker" style="color:var(--blue)">--</div></div>
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">MÃ TĂNG</div><div class="stat-val up" id="count-up">0</div></div>
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">MÃ GIẢM</div><div class="stat-val down" id="count-down">0</div></div>
+            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">MÃ BIẾN ĐỘNG MẠNH</div><div class="stat-val" id="top-ticker" style="color:var(--blue)">--</div></div>
+            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">SỐ MÃ TĂNG</div><div class="stat-val up" id="count-up">0</div></div>
+            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">SỐ MÃ GIẢM</div><div class="stat-val down" id="count-down">0</div></div>
         </div>
 
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Mã CP</th>
+                        <th>Mã CP (Xem nến)</th>
                         <th>Giá Cuối</th>
                         <th>Biến Động</th>
                         <th>Dự Báo AI</th>
@@ -99,66 +96,61 @@
         </div>
     </div>
 
-    <div id="donate-modal" onclick="toggleModal(false, 'donate')">
+    <div id="donate-modal" class="modal" onclick="closeModal('donate')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <p style="font-weight: 700; margin-bottom: 15px;">Mời mình cafe để duy trì server nhé! ❤️</p>
             <img src="https://raw.githubusercontent.com/9dpi/thantoan/refs/heads/main/qr-code-tech.jpg" alt="QR Donate">
-            <button class="close-btn" onclick="toggleModal(false, 'donate')">Đóng</button>
+            <button class="close-btn" onclick="closeModal('donate')">Đóng</button>
         </div>
     </div>
 
-    <div id="chart-modal" onclick="toggleModal(false, 'chart')">
-        <div class="chart-content" onclick="event.stopPropagation()">
-            <h3 id="chart-title" style="color: var(--text-main); margin-top: 0;">Biểu đồ nến</h3>
-            <div id="stockChart"></div>
-            <button class="close-btn" onclick="toggleModal(false, 'chart')">Đóng</button>
+    <div id="chart-modal" class="modal" onclick="closeModal('chart')">
+        <div class="chart-modal-content" onclick="event.stopPropagation()">
+            <div id="chart-container" style="width: 100%; height: 400px;"></div>
+            <div style="text-align: center;">
+                <button class="close-btn" onclick="closeModal('chart')">Đóng biểu đồ</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let allStocks = [];
-        let stockChart = null; // Biến để lưu instance biểu đồ
+        let fullData = [];
+        let chartInstance = null;
 
-        function toggleModal(show, type) {
-            if (type === 'donate') {
-                document.getElementById('donate-modal').style.display = show ? 'flex' : 'none';
-            } else if (type === 'chart') {
-                document.getElementById('chart-modal').style.display = show ? 'flex' : 'none';
-            }
-        }
+        function openModal(id) { document.getElementById(id + '-modal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id + '-modal').style.display = 'none'; }
 
-        async function updateDashboard() {
+        async function fetchData() {
             try {
-                const response = await fetch(`./data.json?t=${new Date().getTime()}`);
-                const data = await response.json();
-                allStocks = data.stocks || [];
+                const res = await fetch(`./data.json?t=${new Date().getTime()}`);
+                const data = await res.json();
+                fullData = data.stocks || [];
                 
-                document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || 'Chưa có dữ liệu'}`;
-                document.getElementById('forecast-target').innerText = data.forecast_for || '---';
+                document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || '--'}`;
+                document.getElementById('forecast-target').innerText = data.forecast_for || '--';
                 
-                filterTable();
-            } catch (error) { console.error("Lỗi:", error); }
+                // Mặc định xếp theo biến động tuyệt đối lớn nhất
+                fullData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
+                
+                filterAndRender();
+            } catch (e) { console.error("Lỗi tải dữ liệu", e); }
         }
 
-        function filterTable() {
+        function filterAndRender() {
             const search = document.getElementById('searchInput').value.toUpperCase();
             const filter = document.getElementById('filterSelect').value;
             const tbody = document.getElementById('stock-tbody');
             tbody.innerHTML = '';
 
             let up = 0, down = 0;
-            
-            const vn30Default = ["ACB","BCM","BID","BVH","CTG","FPT","GAS","GVR","HDB","HPB","MBB","MSN","MWG","PLX","POW","SAB","SHB","SSB","SSI","STB","TCB","TPB","VCB","VHM","VIB","VIC","VNM","VPB","VRE","VJC"];
-            const displayData = allStocks.length > 0 ? allStocks : vn30Default.map(s => ({s: s, p: 0, c: 0, f: "Đang phân tích", conf: 0}));
-
-            const filtered = displayData.filter(s => {
+            const filtered = fullData.filter(s => {
                 const matchSearch = s.s.includes(search);
-                const matchFilter = filter === 'ALL' || (s.f.replace(' ', '-') === filter);
+                const matchFilter = (filter === 'ALL') || (s.f.replace(' ', '-') === filter);
                 return matchSearch && matchFilter;
             });
 
             filtered.forEach((s, idx) => {
-                if(s.c > 0) up++; else if(s.c < 0) down--; // Fix: dùng down-- thay vì downCount--
+                if(s.c > 0) up++; else if(s.c < 0) down++;
                 if(idx === 0) document.getElementById('top-ticker').innerText = s.s;
 
                 tbody.innerHTML += `
@@ -168,7 +160,7 @@
                         <td class="${s.c > 0 ? 'up' : s.c < 0 ? 'down' : ''}" style="font-weight:700">
                             ${s.c !== 0 ? (s.c > 0 ? '▲' : '▼') + ' ' + Math.abs(s.c) + '%' : '---'}
                         </td>
-                        <td><span class="tag ${s.f === 'Đang phân tích' ? 'tag-DANG-PHAN-TICH' : 'tag-' + s.f.replace(' ', '-')}">${s.f}</span></td>
+                        <td><span class="tag tag-${s.f.replace(' ', '-')}">${s.f}</span></td>
                         <td>
                             <div style="width: 100px; background: #1a1f2e; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
                                 <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
@@ -182,64 +174,26 @@
         }
 
         function showChart(symbol) {
-            const stock = allStocks.find(s => s.s === symbol);
-            if (!stock || !stock.chart_data || stock.chart_data.length === 0) {
-                alert(`Không có dữ liệu biểu đồ cho mã ${symbol}. Vui lòng thử lại khi thị trường mở cửa.`);
-                return;
-            }
+            const stock = fullData.find(x => x.s === symbol);
+            if(!stock || !stock.chart_data) return alert("Chưa có dữ liệu nến cho mã này");
 
-            document.getElementById('chart-title').innerText = `Biểu đồ nến ${symbol}`;
+            openModal('chart');
             
-            const chartOptions = {
-                series: [{
-                    name: symbol,
-                    data: stock.chart_data
-                }],
-                chart: {
-                    type: 'candlestick',
-                    height: 350,
-                    foreColor: '#94a3b8',
-                    toolbar: { show: true }
-                },
-                title: {
-                    text: `Biểu đồ nến ${symbol}`,
-                    align: 'left',
-                    style: { color: '#e2e8f0' }
-                },
-                xaxis: {
-                    type: 'datetime',
-                    labels: { style: { colors: '#94a3b8' } }
-                },
-                yaxis: {
-                    tooltip: { enabled: true },
-                    labels: { style: { colors: '#94a3b8' } }
-                },
-                plotOptions: {
-                    candlestick: {
-                        colors: {
-                            // Tùy chỉnh màu nến: tăng màu xanh, giảm màu đỏ
-                            upward: '#22c55e', 
-                            downward: '#ef4444'
-                        }
-                    }
-                },
-                tooltip: {
-                    theme: 'dark' // Thiết lập tooltip màu tối
-                }
+            const options = {
+                series: [{ data: stock.chart_data }],
+                chart: { type: 'candlestick', height: 350, background: 'transparent', theme: 'dark' },
+                xaxis: { type: 'datetime' },
+                yaxis: { tooltip: { enabled: true } },
+                theme: { mode: 'dark' }
             };
 
-            if (stockChart) {
-                stockChart.updateOptions(chartOptions);
-            } else {
-                stockChart = new ApexCharts(document.querySelector("#stockChart"), chartOptions);
-                stockChart.render();
-            }
-
-            toggleModal(true, 'chart');
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new ApexCharts(document.querySelector("#chart-container"), options);
+            chartInstance.render();
         }
 
-        updateDashboard();
-        setInterval(updateDashboard, 60000); // Cập nhật mỗi 1 phút
+        fetchData();
+        setInterval(fetchData, 60000);
     </script>
 </body>
 </html>

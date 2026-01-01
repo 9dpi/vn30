@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VN30 Smart Dashboard - AI Prediction</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg: #080a0f; --card: #11141d; --border: #1f2430;
@@ -14,12 +13,12 @@
         }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg);
-            color: var(--text-main); margin: 0; padding: 20px; overflow-x: hidden;
+            color: var(--text-main); margin: 0; padding: 20px;
         }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* Header & Stats */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
         .market-stats { display: flex; gap: 15px; margin-bottom: 25px; }
         .stat-box {
             background: var(--card); border: 1px solid var(--border);
@@ -27,24 +26,19 @@
         }
         .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 5px; }
 
-        /* Table Styling */
         .table-container {
             background: var(--card); border-radius: 16px; border: 1px solid var(--border);
-            overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th {
             background: #1a1f2e; padding: 15px; text-align: left;
-            font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+            font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;
         }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-        tr:hover { background: rgba(255,255,255,0.02); }
-
-        /* Ticker & Price */
-        .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
-        .price-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
         
-        /* Prediction Tags */
+        .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
+        
         .tag {
             padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;
             display: inline-block; text-align: center; min-width: 80px;
@@ -55,34 +49,32 @@
         .tag-THEO-DÕI { background: rgba(148, 163, 184, 0.1); color: var(--text-dim); border: 1px solid var(--text-dim); }
 
         .up { color: var(--up); } .down { color: var(--down); }
-        
-        #last-update { font-size: 0.85rem; color: var(--text-dim); }
+        .confidence-bg { width: 100px; background: #1a1f2e; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+        .confidence-bar { background: var(--blue); height: 100%; transition: width 1s ease-in-out; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div>
-                <h1 style="margin:0; font-size: 1.8rem; letter-spacing: -1px;">VN30 <span style="color:var(--blue)">AI-PREDICT</span></h1>
-                <div id="last-update">Đang quét dữ liệu...</div>
+                <h1 style="margin:0; font-size: 1.8rem;">VN30 <span style="color:var(--blue)">AI-PREDICT</span></h1>
+                <div id="last-update" style="font-size: 0.85rem; color: var(--text-dim);">Đang cập nhật dữ liệu...</div>
             </div>
-            <div style="text-align: right;">
-                <span id="forecast-target" style="background: var(--blue); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">--</span>
-            </div>
+            <span id="forecast-target" style="background: var(--blue); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">--</span>
         </div>
 
         <div class="market-stats">
             <div class="stat-box">
-                <div style="color:var(--text-dim); font-size: 0.8rem;">SỐ MÃ TĂNG</div>
+                <div style="color:var(--text-dim); font-size: 0.75rem;">MÃ TĂNG</div>
                 <div class="stat-val up" id="count-up">0</div>
             </div>
             <div class="stat-box">
-                <div style="color:var(--text-dim); font-size: 0.8rem;">SỐ MÃ GIẢM</div>
+                <div style="color:var(--text-dim); font-size: 0.75rem;">MÃ GIẢM</div>
                 <div class="stat-val down" id="count-down">0</div>
             </div>
             <div class="stat-box">
-                <div style="color:var(--text-dim); font-size: 0.8rem;">VOL VN30 (AVG)</div>
-                <div class="stat-val" id="avg-vol">--</div>
+                <div style="color:var(--text-dim); font-size: 0.75rem;">VOL TRUNG BÌNH</div>
+                <div class="stat-val" id="avg-vol">0M</div>
             </div>
         </div>
 
@@ -98,8 +90,7 @@
                         <th>Độ Tin Cậy</th>
                     </tr>
                 </thead>
-                <tbody id="stock-tbody">
-                    </tbody>
+                <tbody id="stock-tbody"></tbody>
             </table>
         </div>
     </div>
@@ -109,33 +100,31 @@
             try {
                 const response = await fetch(`./data.json?t=${new Date().getTime()}`);
                 const data = await response.json();
+                const stocks = data.stocks || [];
                 
                 document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time}`;
-                document.getElementById('forecast-target').innerText = `Dự báo cho: ${data.forecast_for}`;
+                document.getElementById('forecast-target').innerText = `Phiên dự báo: ${data.forecast_for}`;
                 
-                const stocks = data.stocks;
                 const tbody = document.getElementById('stock-tbody');
                 tbody.innerHTML = '';
 
-                let up = 0, down = 0, totalVol = 0;
+                let upCount = 0, downCount = 0, totalVol = 0;
 
                 stocks.forEach(s => {
-                    if(s.c > 0) up++; else if(s.c < 0) down++;
+                    if(s.c > 0) upCount++; else if(s.c < 0) downCount++;
                     totalVol += s.v;
 
                     const row = `
                         <tr>
                             <td><span class="ticker-name">${s.s}</span></td>
-                            <td class="price-val">${s.p.toLocaleString()}</td>
-                            <td class="${s.c >= 0 ? 'up' : 'down'} font-bold">
+                            <td style="font-family: 'JetBrains Mono'">${s.p.toLocaleString()}</td>
+                            <td class="${s.c >= 0 ? 'up' : 'down'}" style="font-weight:700">
                                 ${s.c >= 0 ? '▲' : '▼'} ${Math.abs(s.c)}%
                             </td>
                             <td style="color:var(--text-dim)">${(s.v/1000000).toFixed(2)}M</td>
                             <td><span class="tag tag-${s.f.replace(' ', '-')}">${s.f}</span></td>
                             <td>
-                                <div style="width: 100px; background: #1a1f2e; height: 6px; border-radius: 3px; overflow: hidden;">
-                                    <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
-                                </div>
+                                <div class="confidence-bg"><div class="confidence-bar" style="width: ${s.conf}%"></div></div>
                                 <span style="font-size: 0.7rem; color: var(--text-dim)">${s.conf}%</span>
                             </td>
                         </tr>
@@ -143,17 +132,18 @@
                     tbody.innerHTML += row;
                 });
 
-                document.getElementById('count-up').innerText = up;
-                document.getElementById('count-down').innerText = down;
-                document.getElementById('avg-vol').innerText = (totalVol/(stocks.length*1000000)).toFixed(1) + 'M';
+                document.getElementById('count-up').innerText = upCount;
+                document.getElementById('count-down').innerText = downCount;
+                document.getElementById('avg-vol').innerText = stocks.length > 0 ? (totalVol/(stocks.length*1000000)).toFixed(1) + 'M' : '0M';
 
             } catch (error) {
-                console.error("Lỗi cập nhật:", error);
+                console.error("Lỗi:", error);
+                document.getElementById('last-update').innerText = "Lỗi tải dữ liệu. Vui lòng kiểm tra lại.";
             }
         }
 
         updateDashboard();
-        setInterval(updateDashboard, 60000);
+        setInterval(updateDashboard, 60000); // Cập nhật mỗi phút
     </script>
 </body>
 </html>

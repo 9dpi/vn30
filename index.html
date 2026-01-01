@@ -1,159 +1,159 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
-    <title>VN30 AI Forecasting</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VN30 Smart Dashboard - AI Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg: #0d1117;
-            --card: #161b22;
-            --border: #30363d;
-            --green: #39d353;
-            --red: #f85149;
-            --blue: #58a6ff;
-            --text: #c9d1d9;
+            --bg: #080a0f; --card: #11141d; --border: #1f2430;
+            --text-main: #e2e8f0; --text-dim: #94a3b8;
+            --up: #22c55e; --down: #ef4444; --neutral: #f59e0b; --blue: #3b82f6;
         }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 20px;
+            font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg);
+            color: var(--text-main); margin: 0; padding: 20px; overflow-x: hidden;
         }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Header & Stats */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .market-stats { display: flex; gap: 15px; margin-bottom: 25px; }
+        .stat-box {
+            background: var(--card); border: 1px solid var(--border);
+            padding: 15px 25px; border-radius: 12px; flex: 1; text-align: center;
         }
+        .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 5px; }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+        /* Table Styling */
+        .table-container {
+            background: var(--card); border-radius: 16px; border: 1px solid var(--border);
+            overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: var(--card);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th,
-        td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
+        table { width: 100%; border-collapse: collapse; }
         th {
-            background: #21262d;
-            font-size: 0.8rem;
-            color: #8b949e;
+            background: #1a1f2e; padding: 15px; text-align: left;
+            font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
         }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        tr:hover { background: rgba(255,255,255,0.02); }
 
-        .up {
-            color: var(--green);
-        }
-
-        .down {
-            color: var(--red);
-        }
-
+        /* Ticker & Price */
+        .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
+        .price-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+        
+        /* Prediction Tags */
         .tag {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 0.75rem;
+            padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;
+            display: inline-block; text-align: center; min-width: 80px;
         }
+        .tag-MUA { background: rgba(34, 197, 94, 0.15); color: var(--up); border: 1px solid var(--up); }
+        .tag-BÁN { background: rgba(239, 68, 68, 0.15); color: var(--down); border: 1px solid var(--down); }
+        .tag-GIỮ { background: rgba(245, 158, 11, 0.15); color: var(--neutral); border: 1px solid var(--neutral); }
+        .tag-THEO-DÕI { background: rgba(148, 163, 184, 0.1); color: var(--text-dim); border: 1px solid var(--text-dim); }
 
-        .tag-buy {
-            background: rgba(57, 211, 83, 0.2);
-            color: var(--green);
-        }
-
-        .tag-sell {
-            background: rgba(248, 81, 73, 0.2);
-            color: var(--red);
-        }
+        .up { color: var(--up); } .down { color: var(--down); }
+        
+        #last-update { font-size: 0.85rem; color: var(--text-dim); }
     </style>
 </head>
-
 <body>
     <div class="container">
         <div class="header">
             <div>
-                <h1 style="margin:0; color:var(--blue)">VN30 Predictor</h1>
-                <p id="forecast-date" style="margin:5px 0 0; color:#8b949e"></p>
+                <h1 style="margin:0; font-size: 1.8rem; letter-spacing: -1px;">VN30 <span style="color:var(--blue)">AI-PREDICT</span></h1>
+                <div id="last-update">Đang quét dữ liệu...</div>
             </div>
-            <div style="text-align:right; font-size:0.8rem">
-                Cập nhật: <span id="last-update">--</span>
+            <div style="text-align: right;">
+                <span id="forecast-target" style="background: var(--blue); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">--</span>
             </div>
         </div>
 
-        <div class="stats-grid" id="top-stats"></div>
+        <div class="market-stats">
+            <div class="stat-box">
+                <div style="color:var(--text-dim); font-size: 0.8rem;">SỐ MÃ TĂNG</div>
+                <div class="stat-val up" id="count-up">0</div>
+            </div>
+            <div class="stat-box">
+                <div style="color:var(--text-dim); font-size: 0.8rem;">SỐ MÃ GIẢM</div>
+                <div class="stat-val down" id="count-down">0</div>
+            </div>
+            <div class="stat-box">
+                <div style="color:var(--text-dim); font-size: 0.8rem;">VOL VN30 (AVG)</div>
+                <div class="stat-val" id="avg-vol">--</div>
+            </div>
+        </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Mã CP</th>
-                    <th>Giá Hiện Tại</th>
-                    <th>Biến Động</th>
-                    <th>Dự Báo Phiên Tới</th>
-                    <th>Tin Cậy</th>
-                </tr>
-            </thead>
-            <tbody id="stock-table"></tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã CP</th>
+                        <th>Giá Khớp</th>
+                        <th>Biến Động</th>
+                        <th>Khối Lượng</th>
+                        <th>Dự Báo AI</th>
+                        <th>Độ Tin Cậy</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-tbody">
+                    </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
-        async function fetchData() {
+        async function updateDashboard() {
             try {
-                const res = await fetch(`./data.json?v=${new Date().getTime()}`);
-                const data = await res.json();
+                const response = await fetch(`./data.json?t=${new Date().getTime()}`);
+                const data = await response.json();
+                
+                document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time}`;
+                document.getElementById('forecast-target').innerText = `Dự báo cho: ${data.forecast_for}`;
+                
+                const stocks = data.stocks;
+                const tbody = document.getElementById('stock-tbody');
+                tbody.innerHTML = '';
 
-                document.getElementById('last-update').innerText = data.update_time;
-                document.getElementById('forecast-date').innerText = `Dự báo cho phiên: ${data.forecast_for}`;
+                let up = 0, down = 0, totalVol = 0;
 
-                const table = document.getElementById('stock-table');
-                table.innerHTML = data.stocks.map(s => `
-                    <tr>
-                        <td><strong>${s.s}</strong></td>
-                        <td>${s.p}</td>
-                        <td class="${s.c >= 0 ? 'up' : 'down'}">${s.c >= 0 ? '+' : ''}${s.c}%</td>
-                        <td><span class="tag ${s.f === 'MUA' ? 'tag-buy' : 'tag-sell'}">${s.f}</span></td>
-                        <td style="color:#8b949e">${s.conf}%</td>
-                    </tr>
-                `).join('');
-            } catch (e) {
-                document.getElementById('last-update').innerText = "Lỗi tải dữ liệu!";
+                stocks.forEach(s => {
+                    if(s.c > 0) up++; else if(s.c < 0) down++;
+                    totalVol += s.v;
+
+                    const row = `
+                        <tr>
+                            <td><span class="ticker-name">${s.s}</span></td>
+                            <td class="price-val">${s.p.toLocaleString()}</td>
+                            <td class="${s.c >= 0 ? 'up' : 'down'} font-bold">
+                                ${s.c >= 0 ? '▲' : '▼'} ${Math.abs(s.c)}%
+                            </td>
+                            <td style="color:var(--text-dim)">${(s.v/1000000).toFixed(2)}M</td>
+                            <td><span class="tag tag-${s.f.replace(' ', '-')}">${s.f}</span></td>
+                            <td>
+                                <div style="width: 100px; background: #1a1f2e; height: 6px; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
+                                </div>
+                                <span style="font-size: 0.7rem; color: var(--text-dim)">${s.conf}%</span>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+                document.getElementById('count-up').innerText = up;
+                document.getElementById('count-down').innerText = down;
+                document.getElementById('avg-vol').innerText = (totalVol/(stocks.length*1000000)).toFixed(1) + 'M';
+
+            } catch (error) {
+                console.error("Lỗi cập nhật:", error);
             }
         }
-        fetchData();
-        setInterval(fetchData, 60000);
+
+        updateDashboard();
+        setInterval(updateDashboard, 60000);
     </script>
 </body>
-
 </html>

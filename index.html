@@ -15,22 +15,22 @@
         .container { max-width: 1200px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         
-        /* Search & Filter Bar */
-        .search-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-        .search-input { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px 15px; border-radius: 10px; flex: 1; min-width: 200px; }
-        .filter-select { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 10px; cursor: pointer; }
+        /* Search & Filter */
+        .search-bar { display: flex; gap: 10px; margin-bottom: 25px; }
+        .search-input { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 15px; border-radius: 12px; flex: 1; outline: none; }
+        .filter-select { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 12px; cursor: pointer; }
 
         .market-stats { display: flex; gap: 15px; margin-bottom: 25px; }
         .stat-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; flex: 1; text-align: center; }
         .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 5px; }
 
-        .table-container { background: var(--card); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .table-container { background: var(--card); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #1a1f2e; padding: 15px; text-align: left; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; cursor: pointer; }
+        th { background: #1a1f2e; padding: 15px; text-align: left; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
         
         .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
-        .tag { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; display: inline-block; text-align: center; min-width: 100px; }
+        .tag { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; display: inline-block; text-align: center; min-width: 100px; }
         .tag-MUA { background: rgba(34, 197, 94, 0.15); color: var(--up); border: 1px solid var(--up); }
         .tag-BÁN { background: rgba(239, 68, 68, 0.15); color: var(--down); border: 1px solid var(--down); }
         .tag-GIỮ { background: rgba(245, 158, 11, 0.15); color: var(--neutral); border: 1px solid var(--neutral); }
@@ -38,7 +38,6 @@
 
         .up { color: var(--up); } .down { color: var(--down); }
         .btn-donate { background: #f368e0; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-weight: 700; cursor: pointer; }
-        
         #donate-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; max-width: 320px; color: #1a1b1f; }
         .modal-content img { width: 100%; border-radius: 12px; margin-bottom: 15px; }
@@ -48,8 +47,8 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1 style="margin:0; font-size: 1.6rem;">VN30 <span style="color:var(--blue)">TOP VOLATILITY</span></h1>
-                <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Cập nhật: --</div>
+                <h1 style="margin:0; font-size: 1.6rem;">VN30 <span style="color:var(--blue)">TOP MOVERS</span></h1>
+                <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Đang kết nối...</div>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <button class="btn-donate" onclick="toggleModal(true)">☕ Donate</button>
@@ -58,19 +57,19 @@
         </div>
 
         <div class="search-bar">
-            <input type="text" id="searchInput" class="search-input" placeholder="Tìm mã CP (ví dụ: FPT, VCB...)" onkeyup="filterData()">
-            <select id="filterSelect" class="filter-select" onchange="filterData()">
+            <input type="text" id="searchInput" class="search-input" placeholder="Tìm mã CP (ví dụ: FPT, VCB...)" onkeyup="filterTable()">
+            <select id="filterSelect" class="filter-select" onchange="filterTable()">
                 <option value="ALL">Tất cả dự báo</option>
                 <option value="MUA">Khuyến nghị MUA</option>
                 <option value="BÁN">Khuyến nghị BÁN</option>
-                <option value="DANG-PHAN-TICH">Đang phân tích</option>
+                <option value="GIỮ">Khuyến nghị GIỮ</option>
             </select>
         </div>
 
         <div class="market-stats">
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">MÃ BIẾN ĐỘNG MẠNH</div><div class="stat-val" id="top-mover">--</div></div>
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">SỐ MÃ TĂNG</div><div class="stat-val up" id="count-up">0</div></div>
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">SỐ MÃ GIẢM</div><div class="stat-val down" id="count-down">0</div></div>
+            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">TOP BIẾN ĐỘNG</div><div class="stat-val" id="top-ticker" style="color:var(--blue)">--</div></div>
+            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">MÃ TĂNG</div><div class="stat-val up" id="count-up">0</div></div>
+            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">MÃ GIẢM</div><div class="stat-val down" id="count-down">0</div></div>
         </div>
 
         <div class="table-container">
@@ -79,9 +78,9 @@
                     <tr>
                         <th>Mã CP</th>
                         <th>Giá Cuối</th>
-                        <th>Biến Động %</th>
+                        <th>Biến Động</th>
                         <th>Dự Báo AI</th>
-                        <th>Tin Cậy</th>
+                        <th>Độ Tin Cậy</th>
                     </tr>
                 </thead>
                 <tbody id="stock-tbody"></tbody>
@@ -92,70 +91,63 @@
     <div id="donate-modal" onclick="toggleModal(false)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <img src="https://raw.githubusercontent.com/9dpi/thantoan/refs/heads/main/qr-code-tech.jpg" alt="QR Donate">
-            <p>Mời mình cafe nhé! ❤️</p>
+            <p>Cảm ơn bạn đã ủng hộ! ❤️</p>
             <button onclick="toggleModal(false)">Đóng</button>
         </div>
     </div>
 
     <script>
-        let rawData = [];
+        let allStocks = [];
         function toggleModal(show) { document.getElementById('donate-modal').style.display = show ? 'flex' : 'none'; }
 
         async function updateDashboard() {
             try {
                 const response = await fetch(`./data.json?t=${new Date().getTime()}`);
                 const data = await response.json();
-                rawData = data.stocks || [];
+                allStocks = data.stocks || [];
                 
-                document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || '--'}`;
-                document.getElementById('forecast-target').innerText = data.forecast_for || '---';
+                document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time}`;
+                document.getElementById('forecast-target').innerText = data.forecast_for;
                 
-                // SẮP XẾP: Mã biến động tuyệt đối lớn nhất lên đầu
-                rawData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
-                
-                renderTable(rawData);
-            } catch (error) { console.error("Lỗi tải dữ liệu:", error); }
+                filterTable();
+            } catch (error) { console.error("Lỗi:", error); }
         }
 
-        function renderTable(stocks) {
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toUpperCase();
+            const filter = document.getElementById('filterSelect').value;
             const tbody = document.getElementById('stock-tbody');
             tbody.innerHTML = '';
+
             let up = 0, down = 0;
-
-            stocks.forEach(s => {
-                if(s.c > 0) up++; else if(s.c < 0) down++;
-                const row = `<tr>
-                    <td><span class="ticker-name">${s.s}</span></td>
-                    <td style="font-family: 'JetBrains Mono'">${s.p > 0 ? s.p.toLocaleString() : '---'}</td>
-                    <td class="${s.c > 0 ? 'up' : s.c < 0 ? 'down' : ''}" style="font-weight:700">
-                        ${s.c !== 0 ? (s.c > 0 ? '▲' : '▼') + ' ' + Math.abs(s.c) + '%' : '---'}
-                    </td>
-                    <td><span class="tag tag-${s.f.replace(' ', '-')}">${s.f}</span></td>
-                    <td>
-                        <div style="width: 80px; background: #1a1f2e; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                            <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
-                        </div>
-                        <span style="font-size: 0.7rem; color: var(--text-dim)">${s.conf > 0 ? s.conf + '%' : '--'}</span>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-
-            document.getElementById('count-up').innerText = up;
-            document.getElementById('count-down').innerText = down;
-            if(stocks.length > 0) document.getElementById('top-mover').innerText = stocks[0].s;
-        }
-
-        function filterData() {
-            const searchTerm = document.getElementById('searchInput').value.toUpperCase();
-            const filterType = document.getElementById('filterSelect').value;
-
-            const filtered = rawData.filter(s => {
-                const matchSearch = s.s.includes(searchTerm);
-                const matchFilter = (filterType === 'ALL') || (s.f.replace(' ', '-') === filterType);
+            const filtered = allStocks.filter(s => {
+                const matchSearch = s.s.includes(search);
+                const matchFilter = filter === 'ALL' || s.f === filter;
                 return matchSearch && matchFilter;
             });
-            renderTable(filtered);
+
+            filtered.forEach((s, idx) => {
+                if(s.c > 0) up++; else if(s.c < 0) down++;
+                if(idx === 0) document.getElementById('top-ticker').innerText = s.s;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="ticker-name">${s.s}</span></td>
+                        <td style="font-family: 'JetBrains Mono'">${s.p.toLocaleString()}</td>
+                        <td class="${s.c > 0 ? 'up' : s.c < 0 ? 'down' : ''}" style="font-weight:700">
+                            ${s.c !== 0 ? (s.c > 0 ? '▲' : '▼') + ' ' + Math.abs(s.c) + '%' : '0.0%'}
+                        </td>
+                        <td><span class="tag tag-${s.f.replace(' ', '-')}">${s.f}</span></td>
+                        <td>
+                            <div style="width: 100px; background: #1a1f2e; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
+                            </div>
+                            <span style="font-size: 0.7rem; color: var(--text-dim)">${s.conf}%</span>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('count-up').innerText = up;
+            document.getElementById('count-down').innerText = down;
         }
 
         updateDashboard();

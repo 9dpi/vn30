@@ -4,16 +4,15 @@ from datetime import datetime, timedelta
 import time
 
 def get_market_data():
-    # Danh sách 30 mã VN30
     tickers = ["ACB","BCM","BID","BVH","CTG","FPT","GAS","GVR","HDB","HPG","MBB","MSN","MWG","PLX","POW","SAB","SHB","SSB","SSI","STB","TCB","TPB","VCB","VHM","VIB","VIC","VNM","VPB","VRE","VJC"]
     results = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
 
-    print("--- ĐANG QUÉT DỮ LIỆU LỊCH SỬ 10 PHIÊN GẦN NHẤT ---")
+    print("--- QUÉT DỮ LIỆU LỊCH SỬ ĐỂ ĐẢM BẢO LUÔN CÓ DATA ---")
     
     for s in tickers:
         try:
-            # Lấy dữ liệu 15 ngày để bao phủ mọi kỳ nghỉ lễ
+            # Lấy 15 ngày để bao phủ các ngày nghỉ
             end_ts = int(time.time())
             start_ts = end_ts - (86400 * 15) 
             url = f"https://api.vietstock.vn/ta/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
@@ -22,47 +21,23 @@ def get_market_data():
             if res.status_code == 200:
                 data = res.json()
                 if data and 'c' in data and len(data['c']) >= 2:
-                    prices = data['c']
-                    volumes = data['v']
-                    
-                    last_p = prices[-1] # Giá phiên gần nhất
-                    prev_p = prices[-2] # Giá phiên trước đó
+                    last_p = data['c'][-1]
+                    prev_p = data['c'][-2]
                     change = round(((last_p - prev_p) / prev_p) * 100, 2)
                     
-                    # Thuật toán dự báo dựa trên biến động giá (Volatility)
                     forecast = "THEO DÕI"
                     conf = 65
-                    if change <= -2.5: 
-                        forecast = "MUA"
-                        conf = 85
-                    elif change >= 3.0: 
-                        forecast = "BÁN"
-                        conf = 80
-                    elif abs(change) < 0.5:
-                        forecast = "GIỮ"
-                        conf = 70
+                    if change <= -2.5: forecast, conf = "MUA", 85
+                    elif change >= 3.0: forecast, conf = "BÁN", 80
 
-                    results.append({
-                        "s": s, "p": last_p, "c": change, 
-                        "v": volumes[-1], "f": forecast, "conf": conf
-                    })
-                    print(f"[OK] {s}: {last_p} ({change}%)")
+                    results.append({"s": s, "p": last_p, "c": change, "v": data['v'][-1], "f": forecast, "conf": conf})
             time.sleep(0.2)
-        except Exception as e:
-            print(f"[LỖI] {s}: {str(e)}")
+        except: continue
 
     if results:
-        # SẮP XẾP: Đưa mã biến động mạnh nhất lên đầu bảng
         results.sort(key=lambda x: abs(x['c']), reverse=True)
-        
-        final_output = {
-            "update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            "forecast_for": "Phiên giao dịch kế tiếp",
-            "stocks": results
-        }
         with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump(final_output, f, ensure_ascii=False, indent=2)
-        print("Cập nhật data.json thành công!")
+            json.dump({"update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"), "forecast_for": "Phiên tới", "stocks": results}, f, ensure_ascii=False, indent=2)
 
 if __name__ == "__main__":
     get_market_data()

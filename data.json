@@ -1,13 +1,5 @@
 {
-  "update_time": "06:51:48",
-  "forecast_for": "01/01/2026",
-  "stocks": [
-    {
-      "s": "FPT",
-      "p": 100.0,
-      "c": 1.5,
-      "f": "MUA",
-      "conf": 80
-    }
-  ]
+  "update_time": "07:02:34 01/01/2026",
+  "forecast_for": "02/01/2026",
+  "stocks": []
 }

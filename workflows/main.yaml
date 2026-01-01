@@ -1,0 +1,24 @@
+name: Update Stock Data
+on:
+  schedule:
+    - cron: '0 8 * * 1-5' # Tự động chạy lúc 8h sáng (UTC) từ Thứ 2 - Thứ 6
+  workflow_dispatch: # Cho phép bấm chạy thủ công
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Run Script
+        run: python main.py
+      - name: Commit and Push
+        run: |
+          git config --global user.name 'StockBot'
+          git config --global user.email 'bot@github.com'
+          git add data.json
+          git commit -m "Auto update data" || exit 0
+          git push

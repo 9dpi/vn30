@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>VN30 AI Forecasting</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --green: #39d353;
+            --red: #f85149;
+            --blue: #58a6ff;
+            --text: #c9d1d9;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #21262d;
+            font-size: 0.8rem;
+            color: #8b949e;
+        }
+
+        .up {
+            color: var(--green);
+        }
+
+        .down {
+            color: var(--red);
+        }
+
+        .tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        .tag-buy {
+            background: rgba(57, 211, 83, 0.2);
+            color: var(--green);
+        }
+
+        .tag-sell {
+            background: rgba(248, 81, 73, 0.2);
+            color: var(--red);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 style="margin:0; color:var(--blue)">VN30 Predictor</h1>
+                <p id="forecast-date" style="margin:5px 0 0; color:#8b949e"></p>
+            </div>
+            <div style="text-align:right; font-size:0.8rem">
+                Cập nhật: <span id="last-update">--</span>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="top-stats"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã CP</th>
+                    <th>Giá Hiện Tại</th>
+                    <th>Biến Động</th>
+                    <th>Dự Báo Phiên Tới</th>
+                    <th>Tin Cậy</th>
+                </tr>
+            </thead>
+            <tbody id="stock-table"></tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const res = await fetch(`./data.json?v=${new Date().getTime()}`);
+                const data = await res.json();
+
+                document.getElementById('last-update').innerText = data.update_time;
+                document.getElementById('forecast-date').innerText = `Dự báo cho phiên: ${data.forecast_for}`;
+
+                const table = document.getElementById('stock-table');
+                table.innerHTML = data.stocks.map(s => `
+                    <tr>
+                        <td><strong>${s.s}</strong></td>
+                        <td>${s.p}</td>
+                        <td class="${s.c >= 0 ? 'up' : 'down'}">${s.c >= 0 ? '+' : ''}${s.c}%</td>
+                        <td><span class="tag ${s.f === 'MUA' ? 'tag-buy' : 'tag-sell'}">${s.f}</span></td>
+                        <td style="color:#8b949e">${s.conf}%</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                document.getElementById('last-update').innerText = "Lỗi tải dữ liệu!";
+            }
+        }
+        fetchData();
+        setInterval(fetchData, 60000);
+    </script>
+</body>
+
+</html>

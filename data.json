@@ -1,0 +1,55 @@
+import json
+import random
+from datetime import datetime, timedelta
+
+def crawl_and_forecast():
+    # Danh sách VN30 (rút gọn ví dụ)
+    tickers = [
+    "FPT",
+    "VCB",
+    "VIC",
+    "VNM",
+    "HPG",
+    "MBB",
+    "MWG",
+    "STB",
+    "TCB",
+    "VHM"
+]
+    
+    results = []
+    for t in tickers:
+        price = round(random.uniform(20.0,
+150.0),
+2)
+        change = round(random.uniform(-3.0,
+3.0),
+2)
+        
+        # Logic dự báo giả lập (Bạn có thể thay bằng AI model ở đây)
+        forecast = "MUA" if change < -0.5 else "BÁN" if change > 0.5 else "THEO DÕI"
+        confidence = random.randint(60,
+95)
+        
+        results.append({
+    "s": t,
+    "p": price,
+    "c": change,
+    "f": forecast,
+    "conf": confidence
+})
+
+    # Đóng gói dữ liệu
+    data = {
+    "update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
+    "forecast_for": (datetime.now() + timedelta(days=1)).strftime("%d/%m/%Y"),
+    "stocks": results
+}
+
+    with open('data.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    print("Đã cập nhật data.json thành công!")
+
+if __name__ == "__main__":
+    crawl_and_forecast()

@@ -1,31 +1,40 @@
 name: Update Stock Data
 on:
   schedule:
-    - cron: '0 8 * * 1-5'
-  workflow_dispatch:
+    # Chạy vào 15:05 giờ VN (08:05 UTC) từ thứ 2 đến thứ 6
+    - cron: '5 8 * * 1-5'
+  workflow_dispatch: # Cho phép chạy thủ công
 
-# Ngăn chặn việc hủy bỏ các phiên chạy trước đó một cách đột ngột
+# Đảm bảo các tiến trình không tranh chấp nhưng cũng không tự hủy nhau
 concurrency:
   group: "pages"
   cancel-in-progress: false 
+
+permissions:
+  contents: write  # Quyền quan trọng để commit được data.json
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-      - name: Run Script
+
+      - name: Install and Run
         run: |
           pip install requests
           python main.py
+
       - name: Commit and Push
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add data.json
-          git commit -m "Update VN30 data" || exit 0
-          git push
+          # Chỉ commit nếu có sự thay đổi thực sự trong dữ liệu
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update VN30 data: $(date)" && git push)

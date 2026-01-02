@@ -1,68 +1,74 @@
 import json, requests, time
 from datetime import datetime, timedelta
 
-def fetch_from_tcbs(s, start_ts, end_ts):
-    url = f"https://apipub.tcbs.com.vn/trading/v1/derivative/candles?ticker={s}&type=stock&resolution=D&from={start_ts}&to={end_ts}"
-    res = requests.get(url, timeout=10)
-    if res.status_code == 200:
-        data = res.json()
-        if data and len(data) >= 2:
-            ohlc = [{"x": datetime.fromtimestamp(d['t']//1000 if d['t'] > 1e11 else d['t']).strftime('%Y-%m-%d'), 
-                     "y": [d['o'], d['h'], d['l'], d['c']]} for d in data]
-            return {"p": data[-1]['c'], "c": round(((data[-1]['c'] - data[-2]['c']) / data[-2]['c']) * 100, 2), "v": data[-1]['v'], "chart": ohlc}
-    return None
+def fetch_from_yahoo(s):
+    # Chuyển đổi mã sang định dạng Yahoo (ví dụ: FPT -> FPT.VN)
+    symbol = f"{s}.VN"
+    end_ts = int(time.time())
+    start_ts = int((datetime.now() - timedelta(days=30)).timestamp())
+    
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={start_ts}&period2={end_ts}&interval=1d"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    
+    try:
+        res = requests.get(url, headers=headers, timeout=15)
+        if res.status_code == 200:
+            data = res.json()
+            result = data.get('chart', {}).get('result', [])[0]
+            timestamps = result.get('timestamp', [])
+            quote = result.get('indicators', {}).get('quote', [])[0]
+            adj_close = result.get('indicators', {}).get('adjclose', [])[0].get('adjclose', [])
 
-def fetch_from_ssi(s, start_ts, end_ts):
-    headers = {'User-Agent': 'Mozilla/5.0', 'Referer': 'https://iboard.ssi.com.vn/'}
-    url = f"https://iboard-query.ssi.com.vn/stock/chart/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
-    res = requests.get(url, headers=headers, timeout=10)
-    if res.status_code == 200:
-        d = res.json()
-        if d and d.get('s') == 'ok' and len(d.get('c', [])) >= 2:
-            ohlc = [{"x": datetime.fromtimestamp(d['t'][i]).strftime('%Y-%m-%d'), "y": [d['o'][i], d['h'][i], d['l'][i], d['c'][i]]} for i in range(len(d['t']))]
-            return {"p": d['c'][-1], "c": round(((d['c'][-1] - d['c'][-2]) / d['c'][-2]) * 100, 2), "v": d['v'][-1], "chart": ohlc}
+            if len(adj_close) >= 2:
+                # Chuẩn bị dữ liệu OHLC
+                ohlc = []
+                for i in range(len(timestamps)):
+                    if quote['open'][i] is not None:
+                        ohlc.append({
+                            "x": datetime.fromtimestamp(timestamps[i]).strftime('%Y-%m-%d'),
+                            "y": [round(quote['open'][i], 1), round(quote['high'][i], 1), 
+                                  round(quote['low'][i], 1), round(adj_close[i], 1)]
+                        })
+                
+                last_p = round(adj_close[-1], 1)
+                prev_p = round(adj_close[-2], 1)
+                change = round(((last_p - prev_p) / prev_p) * 100, 2)
+                
+                return {"p": last_p, "c": change, "v": quote['volume'][-1], "chart": ohlc}
+    except Exception:
+        pass
     return None
 
 def get_market_data():
     tickers = ["ACB","BCM","BID","BVH","CTG","FPT","GAS","GVR","HDB","HPG","MBB","MSN","MWG","PLX","POW","SAB","SHB","SSB","SSI","STB","TCB","TPB","VCB","VHM","VIB","VIC","VNM","VPB","VRE","VJC"]
     results = []
-    end_ts = int(time.time())
-    start_ts = int((datetime.now() - timedelta(days=30)).timestamp())
-
-    print(f"--- KHỞI CHẠY HỆ THỐNG QUÉT ĐA NGUỒN (FALLBACK MODE) ---")
+    
+    print("--- TRUY XUẤT DỮ LIỆU TỪ YAHOO FINANCE ---")
 
     for s in tickers:
-        data = None
-        # Thử nguồn 1: TCBS
-        try: data = fetch_from_tcbs(s, start_ts, end_ts)
-        except: pass
-        
-        # Thử nguồn 2 nếu nguồn 1 thất bại: SSI
-        if not data:
-            try: 
-                print(f"[!] {s}: Thử nguồn dự phòng SSI...")
-                data = fetch_from_ssi(s, start_ts, end_ts)
-            except: pass
-
+        data = fetch_from_yahoo(s)
         if data:
             results.append({
                 "s": s, "p": data['p'], "c": data['c'], "v": data['v'],
-                "f": "MUA" if data['c'] < -2.5 else ("BÁN" if data['c'] > 2.5 else "THEO DÕI"),
-                "conf": 80 if abs(data['c']) > 2.5 else 65,
+                "f": "MUA" if data['c'] < -2.0 else ("BÁN" if data['c'] > 2.0 else "THEO DÕI"),
+                "conf": 80 if abs(data['c']) > 2.0 else 65,
                 "chart_data": data['chart']
             })
             print(f"[OK] {s}: {data['p']} ({data['c']}%)")
         else:
-            print(f"[FAIL] {s}: Tất cả các nguồn đều chặn hoặc lỗi.")
+            print(f"[FAIL] {s}: Không thể lấy dữ liệu từ Yahoo.")
         time.sleep(0.5)
 
     if results:
-        # Tự động sắp xếp theo biến động mạnh nhất lên đầu
+        # Sắp xếp theo biến động mạnh nhất lên đầu
         results.sort(key=lambda x: abs(x['c']), reverse=True)
-        output = {"update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"), "stocks": results}
+        output = {
+            "update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
+            "stocks": results
+        }
         with open('data.json', 'w', encoding='utf-8') as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
-        print("--- HOÀN TẤT CẬP NHẬT DỮ LIỆU ---")
+        print(f"--- THÀNH CÔNG: ĐÃ CẬP NHẬT {len(results)} MÃ ---")
 
 if __name__ == "__main__":
     get_market_data()

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VN30 Dự báo Chứng khoán bằng Thuật toán AI</title>
+    <title>VN30 Dự báo Chứng khoán dùng Thuật toán AI</title>
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
         rel="stylesheet">
@@ -270,7 +270,7 @@
                 <tbody id="stock-tbody"></tbody>
             </table>
             <div class="expand-container" id="expand-box">
-                <button class="btn-expand" onclick="toggleExpand()">Xem thêm rổ VN30</button>
+                <button class="btn-expand" onclick="toggleExpand()">Xem thêm các mã khác</button>
             </div>
         </div>
     </div>
@@ -306,19 +306,39 @@
             filterAndRender();
         }
 
+        // Logic tính toán ngày giao dịch tiếp theo (bỏ qua T7, CN)
+        function getNextTradingDate() {
+            let d = new Date();
+            // Nếu sau 15:00, tính từ ngày mai
+            if (d.getHours() >= 15) d.setDate(d.getDate() + 1);
+            
+            // Tìm ngày làm việc tiếp theo
+            let day = d.getDay();
+            if (day === 6) d.setDate(d.getDate() + 2); // Thứ 7 -> Thứ 2
+            else if (day === 0) d.setDate(d.getDate() + 1); // Chủ nhật -> Thứ 2
+            
+            return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
         async function fetchData() {
             try {
                 const res = await fetch(`./data.json?t=${new Date().getTime()}`);
                 const data = await res.json();
                 fullData = data.stocks || [];
                 
-                // Cập nhật text từ JSON vào các ID tương ứng
                 document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || '--'}`;
-                document.getElementById('forecast-target').innerText = data.forecast_for || '--';
+                
+                // Ưu tiên hiển thị ngày từ JSON, nếu rỗng thì tự tính toán
+                const forecastDisplay = data.forecast_for || getNextTradingDate();
+                document.getElementById('forecast-target').innerText = forecastDisplay;
                 
                 fullData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
                 filterAndRender();
-            } catch (e) { console.error("Lỗi tải dữ liệu", e); }
+            } catch (e) { 
+                console.error("Lỗi tải dữ liệu", e);
+                // Fallback ngày nếu fetch lỗi
+                document.getElementById('forecast-target').innerText = getNextTradingDate();
+            }
         }
 
         function filterAndRender() {

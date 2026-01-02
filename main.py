@@ -1,69 +1,68 @@
-import json
-import requests
-from datetime import datetime
-import time
+import json, requests, time
+from datetime import datetime, timedelta
 
 def get_market_data():
     tickers = ["ACB","BCM","BID","BVH","CTG","FPT","GAS","GVR","HDB","HPG","MBB","MSN","MWG","PLX","POW","SAB","SHB","SSB","SSI","STB","TCB","TPB","VCB","VHM","VIB","VIC","VNM","VPB","VRE","VJC"]
     results = []
     
-    # Header cực kỳ chi tiết để vượt lỗi 403
+    # DNSE khá thoáng, chỉ cần Header cơ bản này là đủ
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Origin': 'https://vietstock.vn',
-        'Referer': 'https://vietstock.vn/',
-        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Accept': 'application/json'
     }
 
-    print("--- ĐANG THỬ NGHIỆM PHƯƠNG THỨC TRUY CẬP MỚI ---")
+    print(f"--- BẮT ĐẦU LẤY DATA TỪ DNSE - {datetime.now().strftime('%H:%M:%S')} ---")
     
-    # Sử dụng Session để giữ Cookie, tăng độ tin cậy với Server
-    session = requests.Session()
-    session.headers.update(headers)
+    # Lấy dữ liệu 30 ngày để đảm bảo luôn có phiên gần nhất
+    end_ts = int(time.time())
+    start_ts = end_ts - (86400 * 30)
 
     for s in tickers:
         try:
-            end_ts = int(time.time())
-            start_ts = end_ts - (86400 * 30)
-            url = f"https://api.vietstock.vn/ta/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
-            
-            res = session.get(url, timeout=15)
+            url = f"https://api.dnse.com.vn/chart/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
+            res = requests.get(url, headers=headers, timeout=15)
             
             if res.status_code == 200:
-                data = res.json()
-                if data and 'c' in data and len(data['c']) >= 2:
-                    ohlc = [{"x": datetime.fromtimestamp(data['t'][i]).strftime('%Y-%m-%d'), 
-                             "y": [data['o'][i], data['h'][i], data['l'][i], data['c'][i]]} for i in range(len(data['t']))]
+                d = res.json()
+                # DNSE trả về cấu trúc: { s: 'ok', t: [], o: [], h: [], l: [], c: [], v: [] }
+                if d and 'c' in d and len(d['c']) >= 2:
+                    ohlc = [{"x": datetime.fromtimestamp(d['t'][i]).strftime('%Y-%m-%d'), 
+                             "y": [d['o'][i], d['h'][i], d['l'][i], d['c'][i]]} for i in range(len(d['t']))]
                     
-                    last_p, prev_p = data['c'][-1], data['c'][-2]
+                    last_p, prev_p = d['c'][-1], d['c'][-2]
                     change = round(((last_p - prev_p) / prev_p) * 100, 2)
                     
                     results.append({
-                        "s": s, "p": last_p, "c": change, "v": data['v'][-1],
+                        "s": s, "p": last_p, "c": change, "v": d['v'][-1],
                         "f": "MUA" if change < -2.5 else ("BÁN" if change > 3 else "THEO DÕI"),
                         "conf": 80 if abs(change) > 2.5 else 65,
                         "chart_data": ohlc
                     })
-                    print(f"[THÀNH CÔNG] {s}: {last_p}")
+                    print(f"[OK] {s}: {last_p} ({change}%)")
+                else:
+                    print(f"[TRỐNG] {s}: Không có dữ liệu giao dịch")
             else:
-                print(f"[BỊ CHẶN {res.status_code}] {s}")
+                print(f"[LỖI {res.status_code}] {s}")
             
-            # Nghỉ lâu hơn một chút để server không nghi ngờ
-            time.sleep(1.2)
-            
+            time.sleep(0.3) # Nghỉ ngắn để duy trì kết nối ổn định
         except Exception as e:
-            print(f"[LỖI] {s}: {str(e)}")
+            print(f"[ERR] {s}: {str(e)}")
 
     if results:
+        # Sắp xếp theo biến động mạnh nhất (trị tuyệt đối) để đẩy mã HOT lên đầu
         results.sort(key=lambda x: abs(x['c']), reverse=True)
+        
+        output = {
+            "update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
+            "forecast_for": "Phiên giao dịch tới",
+            "stocks": results
+        }
+        
         with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump({"update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"), 
-                       "forecast_for": "Phiên tới", "stocks": results}, f, ensure_ascii=False, indent=2)
-        print("--- ĐÃ CẬP NHẬT DỮ LIỆU ---")
+            json.dump(output, f, ensure_ascii=False, indent=2)
+        print(f"--- ĐÃ LƯU THÀNH CÔNG {len(results)} MÃ VÀO DATA.JSON ---")
+    else:
+        print("--- THẤT BẠI: MẢNG DỮ LIỆU RỖNG ---")
 
 if __name__ == "__main__":
     get_market_data()

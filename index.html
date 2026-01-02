@@ -1,112 +1,399 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</title>
+    <title>VN30 Dự báo Chứng khoán bằng Thuật toán AI</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
-        /* GIỮ NGUYÊN CSS GỐC CỦA BẠN */
-        body { background-color: #000000; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; }
-        h1 { text-align: center; color: #00ff00; text-transform: uppercase; letter-spacing: 2px; }
-        
-        /* Tối ưu Mobile mới (Chỉ thêm không sửa cũ) */
-        @media (max-width: 600px) {
-            .hide-mobile { display: none; }
-            td, th { padding: 8px 5px; font-size: 0.8rem; }
-            .container { padding: 5px; }
+        :root {
+            --bg: #080a0f;
+            --card: #11141d;
+            --border: #1f2430;
+            --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+            --up: #22c55e;
+            --down: #ef4444;
+            --neutral: #f59e0b;
+            --blue: #3b82f6;
         }
 
-        .header-info { display: flex; justify-content: space-around; background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; flex-wrap: wrap; }
-        .info-item { text-align: center; min-width: 150px; }
-        .info-item b { color: #00ff00; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px; /* Giảm padding cho mobile */
+        }
 
-        table { width: 100%; border-collapse: collapse; background: #111; border-radius: 10px; overflow: hidden; }
-        th { background: #222; color: #00ff00; padding: 15px; border-bottom: 2px solid #333; }
-        td { padding: 15px; text-align: center; border-bottom: 1px solid #222; }
-        
-        .text-up { color: #00ff00; font-weight: bold; }
-        .text-down { color: #ff0000; font-weight: bold; }
-        
-        .badge { padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem; }
-        .badge-mua { background: #004d00; color: #00ff00; border: 1px solid #00ff00; }
-        .badge-ban { background: #4d0000; color: #ff0000; border: 1px solid #ff0000; }
-        .badge-theo { background: #333; color: #aaa; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-        /* NÚT DONATE - ĐÃ PHỤC HỒI */
-        .donate-section { text-align: center; margin-top: 40px; padding: 20px; background: #1a1a1a; border-radius: 10px; border: 1px dashed #444; }
-        .btn-donate { background: #ff4500; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; transition: 0.3s; }
-        .btn-donate:hover { background: #ff6347; transform: scale(1.05); }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
 
-        /* Nút xem thêm */
-        #btn-more { display: block; width: 200px; margin: 20px auto; padding: 10px; background: transparent; color: #00ff00; border: 1px solid #00ff00; border-radius: 5px; cursor: pointer; }
+        /* Search & Filter Bar */
+        .controls-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 12px;
+            flex: 1;
+            min-width: 200px; /* Giảm nhẹ cho mobile */
+            outline: none;
+        }
+
+        .filter-select {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            outline: none;
+            flex-grow: 1; /* Cho phép giãn trên mobile */
+        }
+
+        .market-stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            overflow-x: auto; /* Cuộn ngang nếu stats quá dài trên mobile */
+            padding-bottom: 5px;
+        }
+
+        .stat-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 12px;
+            flex: 1;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .table-container {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px; /* Giảm min-width để mobile cuộn ít hơn */
+        }
+
+        th {
+            background: #1a1f2e;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .ticker-name {
+            font-weight: 700;
+            color: var(--blue);
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        .tag {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            display: inline-block;
+            text-align: center;
+            min-width: 85px;
+        }
+
+        .tag-MUA { background: rgba(34, 197, 94, 0.15); color: var(--up); border: 1px solid var(--up); }
+        .tag-BÁN { background: rgba(239, 68, 68, 0.15); color: var(--down); border: 1px solid var(--down); }
+        .tag-GIỮ { background: rgba(245, 158, 11, 0.15); color: var(--neutral); border: 1px solid var(--neutral); }
+        .tag-DANG-PHAN-TICH { background: rgba(59, 130, 246, 0.1); color: var(--blue); border: 1px solid var(--blue); }
+
+        .up { color: var(--up); }
+        .down { color: var(--down); }
+
+        .btn-donate {
+            background: #f368e0;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.85rem;
+        }
+
+        /* Nút Xem thêm */
+        .expand-container {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(to top, var(--card), transparent);
+        }
+
+        .btn-expand {
+            background: var(--border);
+            color: var(--text-main);
+            border: 1px solid var(--text-dim);
+            padding: 10px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-expand:hover {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+
+        /* Modals Responsive */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            color: #1a1b1f;
+        }
+
+        .chart-modal-content {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 900px;
+            border: 1px solid var(--border);
+        }
+
+        /* Media Queries Mobile */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.3rem !important; }
+            .search-input { min-width: 100%; }
+            .header { justify-content: center; text-align: center; }
+            .stat-val { font-size: 1rem; }
+            td, th { padding: 10px 8px; }
+            .hide-mobile { display: none; } /* Class để ẩn cột ít quan trọng trên mobile */
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</h1>
-        
-        <div class="header-info">
-            <div class="info-item">🕒 Cập nhật: <b id="up-time">--</b></div>
-            <div class="info-item">🎯 Dự báo phiên: <b id="for-date">--</b></div>
-            <div class="info-item">⏳ Lần tới: <b id="next-up">--</b></div>
+        <div class="header">
+            <div>
+                <h1 style="margin:0; font-size: 1.6rem; letter-spacing: -1px;">VN30 <span style="color:var(--blue)">TOP MOVERS</span></h1>
+                <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Cập nhật: --</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="btn-donate" onclick="openModal('donate')">☕ Cafe ❤️</button>
+                <span id="forecast-target" style="background: var(--blue); padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">--</span>
+            </div>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Mã</th>
-                    <th>Giá</th>
-                    <th>+/- %</th>
-                    <th class="hide-mobile">Khối lượng</th>
-                    <th>Dự báo</th>
-                </tr>
-            </thead>
-            <tbody id="main-table"></tbody>
-        </table>
+        <div class="controls-bar">
+            <input type="text" id="searchInput" class="search-input" placeholder="Mã CP hoặc biến động..." onkeyup="filterAndRender()">
+            <select id="filterSelect" class="filter-select" onchange="filterAndRender()">
+                <option value="ALL">Tất cả dự báo</option>
+                <option value="MUA">MUA</option>
+                <option value="BÁN">BÁN</option>
+                <option value="GIỮ">GIỮ</option>
+                <option value="DANG-PHAN-TICH">Đang phân tích</option>
+            </select>
+        </div>
 
-        <button id="btn-more" onclick="expand()">XEM THÊM VN30 +</button>
+        <div class="market-stats">
+            <div class="stat-box">
+                <div style="color:var(--text-dim); font-size: 0.65rem;">TOP BIẾN ĐỘNG</div>
+                <div class="stat-val" id="top-ticker" style="color:var(--blue)">--</div>
+            </div>
+            <div class="stat-box">
+                <div style="color:var(--text-dim); font-size: 0.65rem;">MÃ TĂNG</div>
+                <div class="stat-val up" id="count-up">0</div>
+            </div>
+            <div class="stat-box">
+                <div style="color:var(--text-dim); font-size: 0.65rem;">MÃ GIẢM</div>
+                <div class="stat-val down" id="count-down">0</div>
+            </div>
+        </div>
 
-        <div class="donate-section">
-            <p>Nếu thuật toán AI giúp bạn có lợi nhuận, hãy mời tôi một ly cà phê ☕</p>
-            <a href="YOUR_DONATE_LINK" class="btn-donate">DONATE QUA MOMO/BANK</a>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã CP</th>
+                        <th>Giá</th>
+                        <th>Biến Động</th>
+                        <th>AI</th>
+                        <th class="hide-mobile">Tin Cậy</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-tbody"></tbody>
+            </table>
+            <div class="expand-container" id="expand-box">
+                <button class="btn-expand" onclick="toggleExpand()">Xem thêm rổ VN30</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="donate-modal" class="modal" onclick="closeModal('donate')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <p style="font-weight: 700; margin-bottom: 15px;">Duy trì server AI Dashboard ❤️</p>
+            <img src="https://raw.githubusercontent.com/9dpi/thantoan/refs/heads/main/qr-code-tech.jpg" alt="QR Donate" style="width: 100%; border-radius: 12px;">
+            <button class="close-btn" style="background:#f1f2f6; border:none; padding:10px 20px; border-radius:10px; margin-top:10px; cursor:pointer;" onclick="closeModal('donate')">Đóng</button>
+        </div>
+    </div>
+
+    <div id="chart-modal" class="modal" onclick="closeModal('chart')">
+        <div class="chart-modal-content" onclick="event.stopPropagation()">
+            <div id="chart-container" style="width: 100%; height: 350px;"></div>
+            <div style="text-align: center;">
+                <button class="close-btn" style="background:#1a1f2e; color:white; border:1px solid #333; padding:10px 20px; border-radius:10px; cursor:pointer;" onclick="closeModal('chart')">Đóng</button>
+            </div>
         </div>
     </div>
 
     <script>
         let fullData = [];
-        let isExpanded = false;
+        let chartInstance = null;
+        let isExpanded = false; // Trạng thái mở rộng
 
-        async function init() {
+        function openModal(id) { document.getElementById(id + '-modal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id + '-modal').style.display = 'none'; }
+
+        function toggleExpand() {
+            isExpanded = true;
+            document.getElementById('expand-box').style.display = 'none';
+            filterAndRender();
+        }
+
+        async function fetchData() {
             try {
-                const r = await fetch('data.json?v=' + Date.now());
-                const d = await r.json();
-                fullData = d.stocks;
-                document.getElementById('up-time').innerText = d.update_time;
-                document.getElementById('for-date').innerText = d.forecast_for;
-                document.getElementById('next-up').innerText = d.next_update;
-                render();
-            } catch(e) { console.log("Lỗi tải data"); }
+                const res = await fetch(`./data.json?t=${new Date().getTime()}`);
+                const data = await res.json();
+                fullData = data.stocks || [];
+                document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || '--'}`;
+                document.getElementById('forecast-target').innerText = data.forecast_for || '--';
+                fullData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
+                filterAndRender();
+            } catch (e) { console.error("Lỗi tải dữ liệu", e); }
         }
 
-        function render() {
-            const body = document.getElementById('main-table');
-            const list = isExpanded ? fullData : fullData.slice(0, 10);
-            body.innerHTML = list.map(s => `
-                <tr>
-                    <td><b>${s.s}</b></td>
-                    <td>${s.p}</td>
-                    <td class="${s.c >= 0 ? 'text-up' : 'text-down'}">${s.c}%</td>
-                    <td class="hide-mobile">${(s.v/1e6).toFixed(1)}M</td>
-                    <td><span class="badge badge-${s.f.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace('đ','d').substring(0,3)}">${s.f}</span></td>
-                </tr>
-            `).join('');
-            document.getElementById('btn-more').style.display = isExpanded ? 'none' : 'block';
+        function filterAndRender() {
+            const search = document.getElementById('searchInput').value.toUpperCase();
+            const filter = document.getElementById('filterSelect').value;
+            const tbody = document.getElementById('stock-tbody');
+            tbody.innerHTML = '';
+
+            let up = 0, down = 0;
+            const filtered = fullData.filter(s => {
+                const matchSearch = s.s.includes(search);
+                const matchFilter = (filter === 'ALL') || (s.f.replace(' ', '-') === filter);
+                return matchSearch && matchFilter;
+            });
+
+            // Logic Xem thêm: Nếu chưa mở rộng, chỉ hiện 10 mã
+            const displayData = isExpanded ? filtered : filtered.slice(0, 10);
+
+            displayData.forEach((s, idx) => {
+                if (s.c > 0) up++; else if (s.c < 0) down++;
+                if (idx === 0) document.getElementById('top-ticker').innerText = s.s;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="ticker-name" onclick="showChart('${s.s}')">${s.s}</span></td>
+                        <td style="font-family: 'JetBrains Mono'">${s.p > 0 ? s.p.toLocaleString() : '---'}</td>
+                        <td class="${s.c > 0 ? 'up' : s.c < 0 ? 'down' : ''}" style="font-weight:700">
+                            ${s.c !== 0 ? (s.c > 0 ? '▲' : '▼') + ' ' + Math.abs(s.c) + '%' : '---'}
+                        </td>
+                        <td><span class="tag tag-${s.f.replace(' ', '-')}">${s.f}</span></td>
+                        <td class="hide-mobile">
+                            <div style="width: 70px; background: #1a1f2e; height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
+                                <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
+                            </div>
+                            <span style="font-size: 0.65rem; color: var(--text-dim)">${s.conf > 0 ? s.conf + '%' : '--'}</span>
+                        </td>
+                    </tr>`;
+            });
+            document.getElementById('count-up').innerText = up;
+            document.getElementById('count-down').innerText = down;
         }
 
-        function expand() { isExpanded = true; render(); }
-        init();
+        function showChart(symbol) {
+            const stock = fullData.find(x => x.s === symbol);
+            if (!stock || !stock.chart_data) return alert("Chưa có dữ liệu nến cho mã này");
+            openModal('chart');
+            const options = {
+                series: [{ data: stock.chart_data }],
+                chart: { type: 'candlestick', height: 350, background: 'transparent', theme: 'dark', toolbar: { show: false } },
+                xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } } },
+                yaxis: { labels: { style: { colors: '#94a3b8' } } },
+                theme: { mode: 'dark' },
+                plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' } } }
+            };
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new ApexCharts(document.querySelector("#chart-container"), options);
+            chartInstance.render();
+        }
+
+        fetchData();
+        setInterval(fetchData, 60000);
     </script>
 </body>
 </html>

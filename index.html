@@ -27,7 +27,7 @@
             background-color: var(--bg);
             color: var(--text-main);
             margin: 0;
-            padding: 10px; /* Giảm padding cho mobile */
+            padding: 10px;
         }
 
         .container {
@@ -44,7 +44,6 @@
             gap: 15px;
         }
 
-        /* Search & Filter Bar */
         .controls-bar {
             display: flex;
             gap: 10px;
@@ -59,7 +58,7 @@
             padding: 12px 15px;
             border-radius: 12px;
             flex: 1;
-            min-width: 200px; /* Giảm nhẹ cho mobile */
+            min-width: 200px;
             outline: none;
         }
 
@@ -71,14 +70,14 @@
             border-radius: 12px;
             cursor: pointer;
             outline: none;
-            flex-grow: 1; /* Cho phép giãn trên mobile */
+            flex-grow: 1;
         }
 
         .market-stats {
             display: flex;
             gap: 10px;
             margin-bottom: 25px;
-            overflow-x: auto; /* Cuộn ngang nếu stats quá dài trên mobile */
+            overflow-x: auto;
             padding-bottom: 5px;
         }
 
@@ -109,7 +108,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 600px; /* Giảm min-width để mobile cuộn ít hơn */
+            min-width: 600px;
         }
 
         th {
@@ -166,7 +165,6 @@
             font-size: 0.85rem;
         }
 
-        /* Nút Xem thêm */
         .expand-container {
             text-align: center;
             padding: 20px;
@@ -184,52 +182,35 @@
             transition: 0.3s;
         }
 
-        .btn-expand:hover {
-            background: var(--blue);
-            border-color: var(--blue);
-        }
-
-        /* Modals Responsive */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.95);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 10px;
+            justify-content: center; align-items: center;
+            z-index: 1000; padding: 10px;
         }
 
         .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 90%;
-            color: #1a1b1f;
+            background: white; padding: 20px;
+            border-radius: 20px; text-align: center;
+            max-width: 90%; color: #1a1b1f;
         }
 
         .chart-modal-content {
-            background: var(--card);
-            padding: 15px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 900px;
-            border: 1px solid var(--border);
+            background: var(--card); padding: 15px;
+            border-radius: 20px; width: 100%;
+            max-width: 900px; border: 1px solid var(--border);
         }
 
-        /* Media Queries Mobile */
         @media (max-width: 600px) {
             h1 { font-size: 1.3rem !important; }
             .search-input { min-width: 100%; }
             .header { justify-content: center; text-align: center; }
             .stat-val { font-size: 1rem; }
             td, th { padding: 10px 8px; }
-            .hide-mobile { display: none; } /* Class để ẩn cột ít quan trọng trên mobile */
+            .hide-mobile { display: none; }
         }
     </style>
 </head>
@@ -241,9 +222,11 @@
                 <h1 style="margin:0; font-size: 1.6rem; letter-spacing: -1px;">VN30 <span style="color:var(--blue)">TOP MOVERS</span></h1>
                 <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Cập nhật: --</div>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
                 <button class="btn-donate" onclick="openModal('donate')">☕ Cafe ❤️</button>
-                <span id="forecast-target" style="background: var(--blue); padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">--</span>
+                <div style="background: var(--blue); padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; white-space: nowrap;">
+                    Dự báo phiên: <span id="forecast-target">--</span>
+                </div>
             </div>
         </div>
 
@@ -312,7 +295,7 @@
     <script>
         let fullData = [];
         let chartInstance = null;
-        let isExpanded = false; // Trạng thái mở rộng
+        let isExpanded = false;
 
         function openModal(id) { document.getElementById(id + '-modal').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id + '-modal').style.display = 'none'; }
@@ -328,8 +311,11 @@
                 const res = await fetch(`./data.json?t=${new Date().getTime()}`);
                 const data = await res.json();
                 fullData = data.stocks || [];
+                
+                // Cập nhật text từ JSON vào các ID tương ứng
                 document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || '--'}`;
                 document.getElementById('forecast-target').innerText = data.forecast_for || '--';
+                
                 fullData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
                 filterAndRender();
             } catch (e) { console.error("Lỗi tải dữ liệu", e); }
@@ -348,7 +334,6 @@
                 return matchSearch && matchFilter;
             });
 
-            // Logic Xem thêm: Nếu chưa mở rộng, chỉ hiện 10 mã
             const displayData = isExpanded ? filtered : filtered.slice(0, 10);
 
             displayData.forEach((s, idx) => {

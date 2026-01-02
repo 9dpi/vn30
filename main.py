@@ -1,94 +1,69 @@
 import json
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 
 def get_market_data():
-    # Danh sách 30 mã VN30
     tickers = ["ACB","BCM","BID","BVH","CTG","FPT","GAS","GVR","HDB","HPG","MBB","MSN","MWG","PLX","POW","SAB","SHB","SSB","SSI","STB","TCB","TPB","VCB","VHM","VIB","VIC","VNM","VPB","VRE","VJC"]
     results = []
     
-    # Header để giả lập trình duyệt, tránh bị SSI chặn
+    # Header cực kỳ chi tiết để vượt lỗi 403
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://iboard.ssi.com.vn/'
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Origin': 'https://vietstock.vn',
+        'Referer': 'https://vietstock.vn/',
+        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
     }
 
-    print("--- BẮT ĐẦU QUÉT DỮ LIỆU TỪ SSI (LẤY 30 NGÀY LỊCH SỬ) ---")
+    print("--- ĐANG THỬ NGHIỆM PHƯƠNG THỨC TRUY CẬP MỚI ---")
     
-    # Tính toán mốc thời gian: từ 30 ngày trước đến hiện tại
-    end_ts = int(time.time())
-    start_ts = int((datetime.now() - timedelta(days=30)).timestamp())
+    # Sử dụng Session để giữ Cookie, tăng độ tin cậy với Server
+    session = requests.Session()
+    session.headers.update(headers)
 
     for s in tickers:
         try:
-            # API SSI iBoard cho dữ liệu nến (History)
-            url = f"https://iboard-query.ssi.com.vn/stock/chart/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
+            end_ts = int(time.time())
+            start_ts = end_ts - (86400 * 30)
+            url = f"https://api.vietstock.vn/ta/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
             
-            res = requests.get(url, headers=headers, timeout=15)
+            res = session.get(url, timeout=15)
             
-            # Kiểm tra nếu phản hồi thành công
             if res.status_code == 200:
                 data = res.json()
-                
-                # Kiểm tra cấu trúc dữ liệu trả về (SSI trả về các mảng t, o, h, l, c, v)
-                if data and isinstance(data, dict) and 'c' in data and len(data['c']) >= 2:
+                if data and 'c' in data and len(data['c']) >= 2:
+                    ohlc = [{"x": datetime.fromtimestamp(data['t'][i]).strftime('%Y-%m-%d'), 
+                             "y": [data['o'][i], data['h'][i], data['l'][i], data['c'][i]]} for i in range(len(data['t']))]
                     
-                    # Chuẩn bị dữ liệu OHLC cho biểu đồ nến
-                    ohlc_data = []
-                    for i in range(len(data['t'])):
-                        ohlc_data.append({
-                            "x": datetime.fromtimestamp(data['t'][i]).strftime('%Y-%m-%d'),
-                            "y": [data['o'][i], data['h'][i], data['l'][i], data['c'][i]]
-                        })
-                    
-                    last_p = data['c'][-1] # Giá đóng cửa phiên gần nhất
-                    prev_p = data['c'][-2] # Giá đóng cửa phiên trước đó
+                    last_p, prev_p = data['c'][-1], data['c'][-2]
                     change = round(((last_p - prev_p) / prev_p) * 100, 2)
                     
-                    # Thuật toán dự báo đơn giản
-                    forecast = "THEO DÕI"
-                    conf = 65
-                    if change <= -2.5: forecast, conf = "MUA", 85
-                    elif change >= 3.0: forecast, conf = "BÁN", 80
-
                     results.append({
-                        "s": s, 
-                        "p": last_p, 
-                        "c": change, 
-                        "v": data['v'][-1], 
-                        "f": forecast, 
-                        "conf": conf,
-                        "chart_data": ohlc_data 
+                        "s": s, "p": last_p, "c": change, "v": data['v'][-1],
+                        "f": "MUA" if change < -2.5 else ("BÁN" if change > 3 else "THEO DÕI"),
+                        "conf": 80 if abs(change) > 2.5 else 65,
+                        "chart_data": ohlc
                     })
-                    print(f"[OK] {s}: {last_p} ({change}%)")
-                else:
-                    print(f"[TRỐNG] {s}: Không có dữ liệu giao dịch.")
+                    print(f"[THÀNH CÔNG] {s}: {last_p}")
             else:
-                print(f"[LỖI HTTP] {s}: {res.status_code}")
-                
-            # Nghỉ ngắn để không bị SSI chặn IP
-            time.sleep(0.5)
+                print(f"[BỊ CHẶN {res.status_code}] {s}")
+            
+            # Nghỉ lâu hơn một chút để server không nghi ngờ
+            time.sleep(1.2)
             
         except Exception as e:
-            print(f"[LỖI HỆ THỐNG] {s}: {str(e)}")
+            print(f"[LỖI] {s}: {str(e)}")
 
     if results:
-        # SẮP XẾP: Đưa các mã biến động mạnh nhất (tăng/giảm) lên đầu
         results.sort(key=lambda x: abs(x['c']), reverse=True)
-        
-        final_output = {
-            "update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            "forecast_for": "Phiên giao dịch kế tiếp",
-            "stocks": results
-        }
-        
         with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump(final_output, f, ensure_ascii=False, indent=2)
-        print("--- CẬP NHẬT DATA.JSON THÀNH CÔNG ---")
-    else:
-        print("--- THẤT BẠI: KHÔNG LẤY ĐƯỢC DỮ LIỆU NÀO ---")
+            json.dump({"update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"), 
+                       "forecast_for": "Phiên tới", "stocks": results}, f, ensure_ascii=False, indent=2)
+        print("--- ĐÃ CẬP NHẬT DỮ LIỆU ---")
 
 if __name__ == "__main__":
     get_market_data()

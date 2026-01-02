@@ -4,36 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --up: #26a69a; --down: #ef5350; --bg: #f8f9fa; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; }
-        .container { max-width: 800px; margin: auto; padding: 20px; }
-        h1 { text-align: center; color: #1a237e; font-size: 1.5rem; margin-bottom: 5px; }
-        .header-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
-        .header-card p { margin: 5px 0; font-size: 0.9rem; color: #555; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
-        th { background: #1a237e; color: white; padding: 12px; font-size: 0.9rem; }
-        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        .text-up { color: var(--up); font-weight: bold; }
-        .text-down { color: var(--down); font-weight: bold; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: white; }
-        .bg-mua { background: var(--up); } .bg-ban { background: var(--down); } .bg-theo { background: #78909c; }
-        #btn-more { display: block; width: 100%; padding: 12px; margin-top: 15px; border: none; background: #fff; color: #1a237e; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* PHỤC HỒI GIAO DIỆN NỀN TỐI */
+        body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: auto; padding: 20px; }
+        h1 { text-align: center; color: #ffffff; margin-bottom: 10px; }
+        
+        /* Thông tin thời gian */
+        .info-bar { text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #b0b0b0; }
+        .info-bar b { color: #bb86fc; }
+
+        /* Bảng dữ liệu phong cách cũ */
+        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
+        th { background: #333; color: #bb86fc; padding: 12px; text-align: center; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #333; }
+        
+        .text-up { color: #4caf50; font-weight: bold; }
+        .text-down { color: #f44336; font-weight: bold; }
+        
+        /* Tối ưu Mobile */
         @media (max-width: 600px) {
             .hide-mobile { display: none; }
-            td, th { padding: 10px 5px; font-size: 0.85rem; }
+            td, th { padding: 8px 4px; font-size: 0.8rem; }
             h1 { font-size: 1.2rem; }
         }
+
+        #btn-expand {
+            display: block; width: 100%; padding: 12px; margin-top: 15px;
+            background: #333; color: #bb86fc; border: 1px solid #444;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        /* Giữ các Class Badge cũ của bạn */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: #fff; }
+        .badge-mua { background: #4caf50; }
+        .badge-ban { background: #f44336; }
+        .badge-theo { background: #757575; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</h1>
-        <div class="header-card">
-            <p><i class="fa-regular fa-clock"></i> Cập nhật: <b id="update_time">--</b></p>
-            <p><i class="fa-solid fa-bullseye"></i> Dự báo cho phiên: <b id="forecast_for" style="color:#1a237e">--</b></p>
-            <p><i class="fa-solid fa-rotate"></i> Lần tới: <span id="next_update">--</span></p>
+        
+        <div class="info-bar">
+            <p>🕒 Cập nhật: <span id="up-time">--</span></p>
+            <p>🎯 Dự báo phiên: <b id="for-date">--</b></p>
+            <p>⏳ Lần tới: <span id="next-up">--</span></p>
         </div>
 
         <table>
@@ -41,47 +56,47 @@
                 <tr>
                     <th>Mã</th>
                     <th>Giá</th>
-                    <th>Biến động</th>
+                    <th>+/- %</th>
                     <th class="hide-mobile">Khối lượng</th>
                     <th>Dự báo</th>
                 </tr>
             </thead>
-            <tbody id="table-body"></tbody>
+            <tbody id="stock-list"></tbody>
         </table>
-        <button id="btn-more" onclick="toggleExpand()">Xem thêm mã VN30 <i class="fa-solid fa-chevron-down"></i></button>
+        <button id="btn-expand" onclick="showAll()">Xem thêm toàn bộ VN30</button>
     </div>
 
     <script>
-        let stockData = [];
-        let expanded = false;
+        let fullData = [];
+        let isFull = false;
 
-        async function init() {
-            const res = await fetch('data.json?v=' + Date.now());
-            const data = await res.json();
-            stockData = data.stocks;
-            document.getElementById('update_time').innerText = data.update_time;
-            document.getElementById('forecast_for').innerText = data.forecast_for;
-            document.getElementById('next_update').innerText = data.next_update;
+        async function start() {
+            const r = await fetch('data.json?v=' + Date.now());
+            const d = await r.json();
+            fullData = d.stocks;
+            document.getElementById('up-time').innerText = d.update_time;
+            document.getElementById('for-date').innerText = d.forecast_for;
+            document.getElementById('next-up').innerText = d.next_update;
             render();
         }
 
         function render() {
-            const body = document.getElementById('table-body');
-            const list = expanded ? stockData : stockData.slice(0, 10);
-            body.innerHTML = list.map(s => `
+            const body = document.getElementById('stock-list');
+            const display = isFull ? fullData : fullData.slice(0, 10);
+            body.innerHTML = display.map(s => `
                 <tr>
                     <td><b>${s.s}</b></td>
                     <td>${s.p}</td>
                     <td class="${s.c >= 0 ? 'text-up' : 'text-down'}">${s.c}%</td>
                     <td class="hide-mobile">${(s.v/1e6).toFixed(1)}M</td>
-                    <td><span class="badge bg-${s.f.substring(0,3).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace('đ','d')}">${s.f}</span></td>
+                    <td><span class="badge badge-${s.f.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace('đ','d').substring(0,3)}">${s.f}</span></td>
                 </tr>
             `).join('');
-            document.getElementById('btn-more').style.display = expanded ? 'none' : 'block';
+            document.getElementById('btn-expand').style.display = isFull ? 'none' : 'block';
         }
 
-        function toggleExpand() { expanded = true; render(); }
-        init();
+        function showAll() { isFull = true; render(); }
+        start();
     </script>
 </body>
 </html>

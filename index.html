@@ -4,196 +4,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --bg: #080a0f; --card: #11141d; --border: #1f2430;
-            --text-main: #e2e8f0; --text-dim: #94a3b8;
-            --up: #22c55e; --down: #ef4444; --neutral: #f59e0b; --blue: #3b82f6;
+        :root { --up: #26a69a; --down: #ef5350; --bg: #f8f9fa; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: auto; padding: 20px; }
+        h1 { text-align: center; color: #1a237e; font-size: 1.5rem; margin-bottom: 5px; }
+        .header-card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
+        .header-card p { margin: 5px 0; font-size: 0.9rem; color: #555; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        th { background: #1a237e; color: white; padding: 12px; font-size: 0.9rem; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        .text-up { color: var(--up); font-weight: bold; }
+        .text-down { color: var(--down); font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: white; }
+        .bg-mua { background: var(--up); } .bg-ban { background: var(--down); } .bg-theo { background: #78909c; }
+        #btn-more { display: block; width: 100%; padding: 12px; margin-top: 15px; border: none; background: #fff; color: #1a237e; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        @media (max-width: 600px) {
+            .hide-mobile { display: none; }
+            td, th { padding: 10px 5px; font-size: 0.85rem; }
+            h1 { font-size: 1.2rem; }
         }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
-        
-        /* Search & Filter Bar */
-        .controls-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-        .search-input { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 15px; border-radius: 12px; flex: 1; min-width: 250px; outline: none; }
-        .filter-select { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 12px; cursor: pointer; outline: none; }
-
-        .market-stats { display: flex; gap: 15px; margin-bottom: 25px; }
-        .stat-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; flex: 1; text-align: center; }
-        .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 5px; }
-
-        .table-container { background: var(--card); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #1a1f2e; padding: 15px; text-align: left; font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-        
-        .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
-        .tag { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.72rem; display: inline-block; text-align: center; min-width: 100px; }
-        .tag-MUA { background: rgba(34, 197, 94, 0.15); color: var(--up); border: 1px solid var(--up); }
-        .tag-BÁN { background: rgba(239, 68, 68, 0.15); color: var(--down); border: 1px solid var(--down); }
-        .tag-GIỮ { background: rgba(245, 158, 11, 0.15); color: var(--neutral); border: 1px solid var(--neutral); }
-        .tag-DANG-PHAN-TICH { background: rgba(59, 130, 246, 0.1); color: var(--blue); border: 1px solid var(--blue); }
-
-        .up { color: var(--up); } .down { color: var(--down); }
-        .btn-donate { background: #f368e0; color: white; border: none; padding: 10px 20px; border-radius: 25px; font-weight: 700; cursor: pointer; transition: 0.3s; }
-        .btn-donate:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(243, 104, 224, 0.4); }
-
-        /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; max-width: 320px; color: #1a1b1f; position: relative; }
-        .modal-content img { width: 100%; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; }
-        
-        .chart-modal-content { background: var(--card); padding: 20px; border-radius: 20px; width: 100%; max-width: 900px; border: 1px solid var(--border); }
-        .close-btn { background: #f1f2f6; border: none; padding: 10px 25px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div>
-                <h1 style="margin:0; font-size: 1.6rem; letter-spacing: -1px;">VN30 <span style="color:var(--blue)">TOP MOVERS</span></h1>
-                <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Cập nhật: --</div>
-            </div>
-            <div style="display: flex; gap: 12px; align-items: center;">
-                <button class="btn-donate" onclick="openModal('donate')">☕ Mời cafe ❤️</button>
-                <span id="forecast-target" style="background: var(--blue); padding: 5px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">--</span>
-            </div>
+        <h1>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</h1>
+        <div class="header-card">
+            <p><i class="fa-regular fa-clock"></i> Cập nhật: <b id="update_time">--</b></p>
+            <p><i class="fa-solid fa-bullseye"></i> Dự báo cho phiên: <b id="forecast_for" style="color:#1a237e">--</b></p>
+            <p><i class="fa-solid fa-rotate"></i> Lần tới: <span id="next_update">--</span></p>
         </div>
 
-        <div class="controls-bar">
-            <input type="text" id="searchInput" class="search-input" placeholder="Tìm mã CP hoặc lọc biến động..." onkeyup="filterAndRender()">
-            <select id="filterSelect" class="filter-select" onchange="filterAndRender()">
-                <option value="ALL">Tất cả dự báo</option>
-                <option value="MUA">Khuyến nghị MUA</option>
-                <option value="BÁN">Khuyến nghị BÁN</option>
-                <option value="GIỮ">Khuyến nghị GIỮ</option>
-                <option value="DANG-PHAN-TICH">Đang phân tích</option>
-            </select>
-        </div>
-
-        <div class="market-stats">
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">MÃ BIẾN ĐỘNG MẠNH</div><div class="stat-val" id="top-ticker" style="color:var(--blue)">--</div></div>
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">SỐ MÃ TĂNG</div><div class="stat-val up" id="count-up">0</div></div>
-            <div class="stat-box"><div style="color:var(--text-dim); font-size: 0.7rem;">SỐ MÃ GIẢM</div><div class="stat-val down" id="count-down">0</div></div>
-        </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Mã CP (Xem nến)</th>
-                        <th>Giá Cuối</th>
-                        <th>Biến Động</th>
-                        <th>Dự Báo AI</th>
-                        <th>Độ Tin Cậy</th>
-                    </tr>
-                </thead>
-                <tbody id="stock-tbody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="donate-modal" class="modal" onclick="closeModal('donate')">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <p style="font-weight: 700; margin-bottom: 15px;">Mời mình cafe để duy trì server nhé! ❤️</p>
-            <img src="https://raw.githubusercontent.com/9dpi/thantoan/refs/heads/main/qr-code-tech.jpg" alt="QR Donate">
-            <button class="close-btn" onclick="closeModal('donate')">Đóng</button>
-        </div>
-    </div>
-
-    <div id="chart-modal" class="modal" onclick="closeModal('chart')">
-        <div class="chart-modal-content" onclick="event.stopPropagation()">
-            <div id="chart-container" style="width: 100%; height: 400px;"></div>
-            <div style="text-align: center;">
-                <button class="close-btn" onclick="closeModal('chart')">Đóng biểu đồ</button>
-            </div>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Giá</th>
+                    <th>Biến động</th>
+                    <th class="hide-mobile">Khối lượng</th>
+                    <th>Dự báo</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+        <button id="btn-more" onclick="toggleExpand()">Xem thêm mã VN30 <i class="fa-solid fa-chevron-down"></i></button>
     </div>
 
     <script>
-        let fullData = [];
-        let chartInstance = null;
+        let stockData = [];
+        let expanded = false;
 
-        function openModal(id) { document.getElementById(id + '-modal').style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id + '-modal').style.display = 'none'; }
-
-        async function fetchData() {
-            try {
-                const res = await fetch(`./data.json?t=${new Date().getTime()}`);
-                const data = await res.json();
-                fullData = data.stocks || [];
-                
-                document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || '--'}`;
-                document.getElementById('forecast-target').innerText = data.forecast_for || '--';
-                
-                // Mặc định xếp theo biến động tuyệt đối lớn nhất
-                fullData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
-                
-                filterAndRender();
-            } catch (e) { console.error("Lỗi tải dữ liệu", e); }
+        async function init() {
+            const res = await fetch('data.json?v=' + Date.now());
+            const data = await res.json();
+            stockData = data.stocks;
+            document.getElementById('update_time').innerText = data.update_time;
+            document.getElementById('forecast_for').innerText = data.forecast_for;
+            document.getElementById('next_update').innerText = data.next_update;
+            render();
         }
 
-        function filterAndRender() {
-            const search = document.getElementById('searchInput').value.toUpperCase();
-            const filter = document.getElementById('filterSelect').value;
-            const tbody = document.getElementById('stock-tbody');
-            tbody.innerHTML = '';
-
-            let up = 0, down = 0;
-            const filtered = fullData.filter(s => {
-                const matchSearch = s.s.includes(search);
-                const matchFilter = (filter === 'ALL') || (s.f.replace(' ', '-') === filter);
-                return matchSearch && matchFilter;
-            });
-
-            filtered.forEach((s, idx) => {
-                if(s.c > 0) up++; else if(s.c < 0) down++;
-                if(idx === 0) document.getElementById('top-ticker').innerText = s.s;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span class="ticker-name" onclick="showChart('${s.s}')">${s.s}</span></td>
-                        <td style="font-family: 'JetBrains Mono'">${s.p > 0 ? s.p.toLocaleString() : '---'}</td>
-                        <td class="${s.c > 0 ? 'up' : s.c < 0 ? 'down' : ''}" style="font-weight:700">
-                            ${s.c !== 0 ? (s.c > 0 ? '▲' : '▼') + ' ' + Math.abs(s.c) + '%' : '---'}
-                        </td>
-                        <td><span class="tag tag-${s.f.replace(' ', '-')}">${s.f}</span></td>
-                        <td>
-                            <div style="width: 100px; background: #1a1f2e; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
-                            </div>
-                            <span style="font-size: 0.7rem; color: var(--text-dim)">${s.conf > 0 ? s.conf + '%' : '--'}</span>
-                        </td>
-                    </tr>`;
-            });
-            document.getElementById('count-up').innerText = up;
-            document.getElementById('count-down').innerText = down;
+        function render() {
+            const body = document.getElementById('table-body');
+            const list = expanded ? stockData : stockData.slice(0, 10);
+            body.innerHTML = list.map(s => `
+                <tr>
+                    <td><b>${s.s}</b></td>
+                    <td>${s.p}</td>
+                    <td class="${s.c >= 0 ? 'text-up' : 'text-down'}">${s.c}%</td>
+                    <td class="hide-mobile">${(s.v/1e6).toFixed(1)}M</td>
+                    <td><span class="badge bg-${s.f.substring(0,3).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace('đ','d')}">${s.f}</span></td>
+                </tr>
+            `).join('');
+            document.getElementById('btn-more').style.display = expanded ? 'none' : 'block';
         }
 
-        function showChart(symbol) {
-            const stock = fullData.find(x => x.s === symbol);
-            if(!stock || !stock.chart_data) return alert("Chưa có dữ liệu nến cho mã này");
-
-            openModal('chart');
-            
-            const options = {
-                series: [{ data: stock.chart_data }],
-                chart: { type: 'candlestick', height: 350, background: 'transparent', theme: 'dark' },
-                xaxis: { type: 'datetime' },
-                yaxis: { tooltip: { enabled: true } },
-                theme: { mode: 'dark' }
-            };
-
-            if(chartInstance) chartInstance.destroy();
-            chartInstance = new ApexCharts(document.querySelector("#chart-container"), options);
-            chartInstance.render();
-        }
-
-        fetchData();
-        setInterval(fetchData, 60000);
+        function toggleExpand() { expanded = true; render(); }
+        init();
     </script>
 </body>
 </html>

@@ -3,21 +3,22 @@ on:
   schedule:
     # Chạy vào 15:05 giờ VN (08:05 UTC) từ thứ 2 đến thứ 6
     - cron: '5 8 * * 1-5'
-  workflow_dispatch: # Cho phép chạy thủ công
+  workflow_dispatch: # Cho phép bạn nhấn nút "Run workflow" thủ công
 
-# Đảm bảo các tiến trình không tranh chấp nhưng cũng không tự hủy nhau
+# Ngăn chặn việc nhiều phiên chạy tranh chấp quyền ghi cùng lúc
 concurrency:
   group: "pages"
   cancel-in-progress: false 
 
 permissions:
-  contents: write  # Quyền quan trọng để commit được data.json
+  contents: write  # Quyền bắt buộc để Commit và Push dữ liệu mới
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
         with:
           persist-credentials: true
 
@@ -31,10 +32,15 @@ jobs:
           pip install requests
           python main.py
 
-      - name: Commit and Push
+      - name: Commit and Push Changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add data.json
-          # Chỉ commit nếu có sự thay đổi thực sự trong dữ liệu
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update VN30 data: $(date)" && git push)
+          # Kiểm tra nếu file data.json có thay đổi thì mới commit để tránh lỗi "nothing to commit"
+          if git diff --staged --quiet; then
+            echo "Dữ liệu không có thay đổi so với phiên trước."
+          else
+            git commit -m "Cập nhật VN30 data: $(date +'%Y-%m-%d %H:%M:%S')"
+            git push
+          fi

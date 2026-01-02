@@ -1,83 +1,68 @@
-import json
-import requests
+import json, requests, time
 from datetime import datetime, timedelta
-import time
+
+def fetch_from_tcbs(s, start_ts, end_ts):
+    url = f"https://apipub.tcbs.com.vn/trading/v1/derivative/candles?ticker={s}&type=stock&resolution=D&from={start_ts}&to={end_ts}"
+    res = requests.get(url, timeout=10)
+    if res.status_code == 200:
+        data = res.json()
+        if data and len(data) >= 2:
+            ohlc = [{"x": datetime.fromtimestamp(d['t']//1000 if d['t'] > 1e11 else d['t']).strftime('%Y-%m-%d'), 
+                     "y": [d['o'], d['h'], d['l'], d['c']]} for d in data]
+            return {"p": data[-1]['c'], "c": round(((data[-1]['c'] - data[-2]['c']) / data[-2]['c']) * 100, 2), "v": data[-1]['v'], "chart": ohlc}
+    return None
+
+def fetch_from_ssi(s, start_ts, end_ts):
+    headers = {'User-Agent': 'Mozilla/5.0', 'Referer': 'https://iboard.ssi.com.vn/'}
+    url = f"https://iboard-query.ssi.com.vn/stock/chart/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
+    res = requests.get(url, headers=headers, timeout=10)
+    if res.status_code == 200:
+        d = res.json()
+        if d and d.get('s') == 'ok' and len(d.get('c', [])) >= 2:
+            ohlc = [{"x": datetime.fromtimestamp(d['t'][i]).strftime('%Y-%m-%d'), "y": [d['o'][i], d['h'][i], d['l'][i], d['c'][i]]} for i in range(len(d['t']))]
+            return {"p": d['c'][-1], "c": round(((d['c'][-1] - d['c'][-2]) / d['c'][-2]) * 100, 2), "v": d['v'][-1], "chart": ohlc}
+    return None
 
 def get_market_data():
-    # Danh sách mã VN30 (Khai báo ban đầu để quản lý)
     tickers = ["ACB","BCM","BID","BVH","CTG","FPT","GAS","GVR","HDB","HPG","MBB","MSN","MWG","PLX","POW","SAB","SHB","SSB","SSI","STB","TCB","TPB","VCB","VHM","VIB","VIC","VNM","VPB","VRE","VJC"]
     results = []
-    
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://iboard.ssi.com.vn/'
-    }
-
-    print("--- BẮT ĐẦU TRÍCH XUẤT DỮ LIỆU ---")
-    
-    # Lấy dữ liệu 30 ngày để đảm bảo luôn có phiên giao dịch gần nhất
     end_ts = int(time.time())
     start_ts = int((datetime.now() - timedelta(days=30)).timestamp())
 
+    print(f"--- KHỞI CHẠY HỆ THỐNG QUÉT ĐA NGUỒN (FALLBACK MODE) ---")
+
     for s in tickers:
-        try:
-            # Sử dụng API SSI iBoard (Dữ liệu nến ngày)
-            url = f"https://iboard-query.ssi.com.vn/stock/chart/history?symbol={s}&resolution=D&from={start_ts}&to={end_ts}"
-            res = requests.get(url, headers=headers, timeout=15)
-            
-            if res.status_code == 200:
-                data = res.json()
-                # Kiểm tra cấu trúc dữ liệu trả về từ SSI (t, o, h, l, c, v)
-                if data and data.get('s') == 'ok' and 'c' in data and len(data['c']) >= 2:
-                    
-                    # Chuẩn bị dữ liệu OHLC cho biểu đồ nến
-                    ohlc_data = []
-                    for i in range(len(data['t'])):
-                        ohlc_data.append({
-                            "x": datetime.fromtimestamp(data['t'][i]).strftime('%Y-%m-%d'),
-                            "y": [data['o'][i], data['h'][i], data['l'][i], data['c'][i]]
-                        })
-                    
-                    last_p = data['c'][-1] # Giá đóng cửa phiên gần nhất
-                    prev_p = data['c'][-2] # Giá đóng cửa phiên trước đó
-                    change = round(((last_p - prev_p) / prev_p) * 100, 2)
-                    
-                    results.append({
-                        "s": s, 
-                        "p": last_p, 
-                        "c": change, 
-                        "v": data['v'][-1], 
-                        "f": "MUA" if change < -2.5 else ("BÁN" if change > 3 else "THEO DÕI"),
-                        "conf": 80 if abs(change) > 2.5 else 65,
-                        "chart_data": ohlc_data 
-                    })
-                    print(f"[OK] {s}: {last_p} ({change}%)")
-                else:
-                    print(f"[TRỐNG] {s}: Không có dữ liệu.")
-            else:
-                print(f"[LỖI {res.status_code}] {s}")
-            
-            time.sleep(0.5) # Tránh bị giới hạn tần suất gửi yêu cầu
-            
-        except Exception as e:
-            print(f"[ERR] {s}: {str(e)}")
+        data = None
+        # Thử nguồn 1: TCBS
+        try: data = fetch_from_tcbs(s, start_ts, end_ts)
+        except: pass
+        
+        # Thử nguồn 2 nếu nguồn 1 thất bại: SSI
+        if not data:
+            try: 
+                print(f"[!] {s}: Thử nguồn dự phòng SSI...")
+                data = fetch_from_ssi(s, start_ts, end_ts)
+            except: pass
+
+        if data:
+            results.append({
+                "s": s, "p": data['p'], "c": data['c'], "v": data['v'],
+                "f": "MUA" if data['c'] < -2.5 else ("BÁN" if data['c'] > 2.5 else "THEO DÕI"),
+                "conf": 80 if abs(data['c']) > 2.5 else 65,
+                "chart_data": data['chart']
+            })
+            print(f"[OK] {s}: {data['p']} ({data['c']}%)")
+        else:
+            print(f"[FAIL] {s}: Tất cả các nguồn đều chặn hoặc lỗi.")
+        time.sleep(0.5)
 
     if results:
-        # LOGIC QUAN TRỌNG: Sắp xếp theo biến động (c) mạnh nhất lên đầu
-        # Sử dụng abs(x['c']) để lấy giá trị tuyệt đối (tăng mạnh nhất hoặc giảm mạnh nhất)
+        # Tự động sắp xếp theo biến động mạnh nhất lên đầu
         results.sort(key=lambda x: abs(x['c']), reverse=True)
-        
-        final_output = {
-            "update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-            "forecast_for": "Phiên giao dịch tới",
-            "stocks": results
-        }
-        
+        output = {"update_time": datetime.now().strftime("%H:%M:%S %d/%m/%Y"), "stocks": results}
         with open('data.json', 'w', encoding='utf-8') as f:
-            json.dump(final_output, f, ensure_ascii=False, indent=2)
-        print("--- ĐÃ LƯU VÀ SẮP XẾP DỮ LIỆU THÀNH CÔNG ---")
-    else:
-        print("--- THẤT BẠI: DỮ LIỆU RỖNG ---")
+            json.dump(output, f, ensure_ascii=False, indent=2)
+        print("--- HOÀN TẤT CẬP NHẬT DỮ LIỆU ---")
 
 if __name__ == "__main__":
     get_market_data()

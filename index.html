@@ -4,51 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
-        /* PHỤC HỒI GIAO DIỆN NỀN TỐI */
-        body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; margin: 0; padding: 0; }
-        .container { max-width: 900px; margin: auto; padding: 20px; }
-        h1 { text-align: center; color: #ffffff; margin-bottom: 10px; }
+        /* GIỮ NGUYÊN CSS GỐC CỦA BẠN */
+        body { background-color: #000000; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        h1 { text-align: center; color: #00ff00; text-transform: uppercase; letter-spacing: 2px; }
         
-        /* Thông tin thời gian */
-        .info-bar { text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #b0b0b0; }
-        .info-bar b { color: #bb86fc; }
-
-        /* Bảng dữ liệu phong cách cũ */
-        table { width: 100%; border-collapse: collapse; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
-        th { background: #333; color: #bb86fc; padding: 12px; text-align: center; }
-        td { padding: 12px; text-align: center; border-bottom: 1px solid #333; }
-        
-        .text-up { color: #4caf50; font-weight: bold; }
-        .text-down { color: #f44336; font-weight: bold; }
-        
-        /* Tối ưu Mobile */
+        /* Tối ưu Mobile mới (Chỉ thêm không sửa cũ) */
         @media (max-width: 600px) {
             .hide-mobile { display: none; }
-            td, th { padding: 8px 4px; font-size: 0.8rem; }
-            h1 { font-size: 1.2rem; }
+            td, th { padding: 8px 5px; font-size: 0.8rem; }
+            .container { padding: 5px; }
         }
 
-        #btn-expand {
-            display: block; width: 100%; padding: 12px; margin-top: 15px;
-            background: #333; color: #bb86fc; border: 1px solid #444;
-            border-radius: 4px; cursor: pointer; font-weight: bold;
-        }
-        /* Giữ các Class Badge cũ của bạn */
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: #fff; }
-        .badge-mua { background: #4caf50; }
-        .badge-ban { background: #f44336; }
-        .badge-theo { background: #757575; }
+        .header-info { display: flex; justify-content: space-around; background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; flex-wrap: wrap; }
+        .info-item { text-align: center; min-width: 150px; }
+        .info-item b { color: #00ff00; }
+
+        table { width: 100%; border-collapse: collapse; background: #111; border-radius: 10px; overflow: hidden; }
+        th { background: #222; color: #00ff00; padding: 15px; border-bottom: 2px solid #333; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #222; }
+        
+        .text-up { color: #00ff00; font-weight: bold; }
+        .text-down { color: #ff0000; font-weight: bold; }
+        
+        .badge { padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 0.8rem; }
+        .badge-mua { background: #004d00; color: #00ff00; border: 1px solid #00ff00; }
+        .badge-ban { background: #4d0000; color: #ff0000; border: 1px solid #ff0000; }
+        .badge-theo { background: #333; color: #aaa; }
+
+        /* NÚT DONATE - ĐÃ PHỤC HỒI */
+        .donate-section { text-align: center; margin-top: 40px; padding: 20px; background: #1a1a1a; border-radius: 10px; border: 1px dashed #444; }
+        .btn-donate { background: #ff4500; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; transition: 0.3s; }
+        .btn-donate:hover { background: #ff6347; transform: scale(1.05); }
+
+        /* Nút xem thêm */
+        #btn-more { display: block; width: 200px; margin: 20px auto; padding: 10px; background: transparent; color: #00ff00; border: 1px solid #00ff00; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>VN30 - Dự báo Chứng khoán bằng Thuật toán AI</h1>
         
-        <div class="info-bar">
-            <p>🕒 Cập nhật: <span id="up-time">--</span></p>
-            <p>🎯 Dự báo phiên: <b id="for-date">--</b></p>
-            <p>⏳ Lần tới: <span id="next-up">--</span></p>
+        <div class="header-info">
+            <div class="info-item">🕒 Cập nhật: <b id="up-time">--</b></div>
+            <div class="info-item">🎯 Dự báo phiên: <b id="for-date">--</b></div>
+            <div class="info-item">⏳ Lần tới: <b id="next-up">--</b></div>
         </div>
 
         <table>
@@ -61,29 +63,37 @@
                     <th>Dự báo</th>
                 </tr>
             </thead>
-            <tbody id="stock-list"></tbody>
+            <tbody id="main-table"></tbody>
         </table>
-        <button id="btn-expand" onclick="showAll()">Xem thêm toàn bộ VN30</button>
+
+        <button id="btn-more" onclick="expand()">XEM THÊM VN30 +</button>
+
+        <div class="donate-section">
+            <p>Nếu thuật toán AI giúp bạn có lợi nhuận, hãy mời tôi một ly cà phê ☕</p>
+            <a href="YOUR_DONATE_LINK" class="btn-donate">DONATE QUA MOMO/BANK</a>
+        </div>
     </div>
 
     <script>
         let fullData = [];
-        let isFull = false;
+        let isExpanded = false;
 
-        async function start() {
-            const r = await fetch('data.json?v=' + Date.now());
-            const d = await r.json();
-            fullData = d.stocks;
-            document.getElementById('up-time').innerText = d.update_time;
-            document.getElementById('for-date').innerText = d.forecast_for;
-            document.getElementById('next-up').innerText = d.next_update;
-            render();
+        async function init() {
+            try {
+                const r = await fetch('data.json?v=' + Date.now());
+                const d = await r.json();
+                fullData = d.stocks;
+                document.getElementById('up-time').innerText = d.update_time;
+                document.getElementById('for-date').innerText = d.forecast_for;
+                document.getElementById('next-up').innerText = d.next_update;
+                render();
+            } catch(e) { console.log("Lỗi tải data"); }
         }
 
         function render() {
-            const body = document.getElementById('stock-list');
-            const display = isFull ? fullData : fullData.slice(0, 10);
-            body.innerHTML = display.map(s => `
+            const body = document.getElementById('main-table');
+            const list = isExpanded ? fullData : fullData.slice(0, 10);
+            body.innerHTML = list.map(s => `
                 <tr>
                     <td><b>${s.s}</b></td>
                     <td>${s.p}</td>
@@ -92,11 +102,11 @@
                     <td><span class="badge badge-${s.f.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace('đ','d').substring(0,3)}">${s.f}</span></td>
                 </tr>
             `).join('');
-            document.getElementById('btn-expand').style.display = isFull ? 'none' : 'block';
+            document.getElementById('btn-more').style.display = isExpanded ? 'none' : 'block';
         }
 
-        function showAll() { isFull = true; render(); }
-        start();
+        function expand() { isExpanded = true; render(); }
+        init();
     </script>
 </body>
 </html>

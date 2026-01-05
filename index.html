@@ -28,6 +28,11 @@
             color: var(--text-main);
             margin: 0;
             padding: 10px;
+            /* Khóa bôi đen */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         .container {
@@ -278,7 +283,6 @@
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
                 <button class="btn-donate" onclick="openModal('donate')">☕ Cafe Chứng khoán ❤️</button>
-
             </div>
         </div>
 
@@ -308,6 +312,7 @@
                 <div class="stat-val down" id="count-down">0</div>
             </div>
         </div>
+
         <div
             style="background: var(--blue); padding: 25px 12px; border-radius: 10px; font-size: 1.0rem; font-weight: 700; white-space: nowrap; text-align: center; margin: 20px 0;">
             Dự báo phiên: <span id="forecast-target">--</span>
@@ -349,12 +354,22 @@
             <div style="text-align: center;">
                 <button class="close-btn"
                     style="background:#1a1f2e; color:white; border:1px solid #333; padding:10px 20px; border-radius:10px; cursor:pointer;"
-                    onclick="closeModal('chart')">Đóng</button>
+                    onclick="closeModal('chart')">Đóng biểu đồ</button>
             </div>
         </div>
     </div>
 
     <script>
+        // LỚP BẢO VỆ MẠNH HƠN: Khóa toàn diện phím và chuột
+        window.addEventListener('contextmenu', function (e) { e.preventDefault(); }, false);
+
+        document.onkeydown = function (e) {
+            // Khóa F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83))) {
+                return false;
+            }
+        };
+
         let fullData = [];
         let chartInstance = null;
         let isExpanded = false;
@@ -368,17 +383,16 @@
             filterAndRender();
         }
 
-        // Logic tính toán ngày giao dịch tiếp theo (bỏ qua T7, CN)
+        // ĐỒNG BỘ THỜI GIAN CHUẨN (UTC+7)
         function getNextTradingDate() {
             let d = new Date();
-            // Nếu sau 15:00, tính từ ngày mai
+            // Nếu sau 15:00 tính ngày mai
             if (d.getHours() >= 15) d.setDate(d.getDate() + 1);
 
-            // Tìm ngày làm việc tiếp theo
-            let day = d.getDay();
-            if (day === 6) d.setDate(d.getDate() + 2); // Thứ 7 -> Thứ 2
-            else if (day === 0) d.setDate(d.getDate() + 1); // Chủ nhật -> Thứ 2
-
+            // Nhảy qua cuối tuần
+            while (d.getDay() === 0 || d.getDay() === 6) {
+                d.setDate(d.getDate() + 1);
+            }
             return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
@@ -387,18 +401,11 @@
                 const res = await fetch(`./data.json?t=${new Date().getTime()}`);
                 const data = await res.json();
                 fullData = data.stocks || [];
-
                 document.getElementById('last-update').innerText = `Cập nhật: ${data.update_time || '--'}`;
-
-                // Ưu tiên hiển thị ngày từ JSON, nếu rỗng thì tự tính toán
-                const forecastDisplay = data.forecast_for || getNextTradingDate();
-                document.getElementById('forecast-target').innerText = forecastDisplay;
-
+                document.getElementById('forecast-target').innerText = getNextTradingDate();
                 fullData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
                 filterAndRender();
             } catch (e) {
-                console.error("Lỗi tải dữ liệu", e);
-                // Fallback ngày nếu fetch lỗi
                 document.getElementById('forecast-target').innerText = getNextTradingDate();
             }
         }
@@ -417,11 +424,9 @@
             });
 
             const displayData = isExpanded ? filtered : filtered.slice(0, 10);
-
             displayData.forEach((s, idx) => {
                 if (s.c > 0) up++; else if (s.c < 0) down++;
                 if (idx === 0) document.getElementById('top-ticker').innerText = s.s;
-
                 tbody.innerHTML += `
                     <tr>
                         <td><span class="ticker-name" onclick="showChart('${s.s}')">${s.s}</span></td>

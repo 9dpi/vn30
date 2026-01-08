@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,157 +12,99 @@
             --text-main: #e2e8f0; --text-dim: #94a3b8;
             --up: #22c55e; --down: #ef4444; --neutral: #f59e0b; --blue: #3b82f6;
         }
-
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg); color: var(--text-main);
-            margin: 0; padding: 10px;
-            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text-main);
+            margin: 0; padding: 10px; -webkit-user-select: none; user-select: none;
         }
-
         .container { max-width: 1200px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .controls-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-        .search-input { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 15px; border-radius: 12px; flex: 1; min-width: 200px; outline: none; }
-        .filter-select { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 12px; cursor: pointer; outline: none; flex-grow: 1; }
-        .market-stats { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; }
-        .stat-box { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; flex: 1; min-width: 100px; text-align: center; }
+        .search-input { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 15px; border-radius: 12px; flex: 1; outline: none; }
+        .filter-select { background: var(--card); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 12px; cursor: pointer; outline: none; }
+        .market-stats { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; }
+        .stat-box { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; flex: 1; text-align: center; min-width: 100px; }
         .stat-val { font-size: 1.2rem; font-weight: 700; margin-top: 5px; }
-        .table-container { background: var(--card); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        .table-container { background: var(--card); border-radius: 16px; border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { background: #1a1f2e; padding: 12px; text-align: left; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         .ticker-name { font-weight: 700; color: var(--blue); font-family: 'JetBrains Mono', monospace; cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
-        .tag { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; display: inline-block; text-align: center; min-width: 85px; }
+        .tag { padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; display: inline-block; text-align: center; min-width: 90px; }
         .tag-MUA { background: rgba(34, 197, 94, 0.15); color: var(--up); border: 1px solid var(--up); }
         .tag-BÁN { background: rgba(239, 68, 68, 0.15); color: var(--down); border: 1px solid var(--down); }
-        .tag-GIỮ { background: rgba(245, 158, 11, 0.15); color: var(--neutral); border: 1px solid var(--neutral); }
-        .tag-DANG-PHAN-TICH { background: rgba(59, 130, 246, 0.1); color: var(--blue); border: 1px solid var(--blue); }
-        .btn-donate { background: #f368e0; color: white; border: none; padding: 10px 18px; border-radius: 25px; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
-        .expand-container { text-align: center; padding: 20px; background: linear-gradient(to top, var(--card), transparent); }
-        .btn-expand { background: var(--border); color: var(--text-main); border: 1px solid var(--text-dim); padding: 10px 30px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
-        .modal-content { background: white; padding: 20px; border-radius: 20px; text-align: center; max-width: 90%; color: #1a1b1f; }
-        .chart-modal-content { background: var(--card); padding: 15px; border-radius: 20px; width: 100%; max-width: 900px; border: 1px solid var(--border); }
-        @media (max-width: 600px) { h1 { font-size: 1.3rem !important; } .search-input { min-width: 100%; } .header { justify-content: center; text-align: center; } .stat-val { font-size: 1rem; } td, th { padding: 10px 8px; } .hide-mobile { display: none; } }
+        .tag-THEO-DÕI { background: rgba(245, 158, 11, 0.15); color: var(--neutral); border: 1px solid var(--neutral); }
+        .up { color: var(--up); } .down { color: var(--down); }
+        .btn-donate { background: #f368e0; color: white; border: none; padding: 10px 18px; border-radius: 25px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); justify-content: center; align-items: center; z-index: 1000; }
+        .chart-modal-content { background: var(--card); padding: 15px; border-radius: 20px; width: 90%; max-width: 900px; border: 1px solid var(--border); }
+        @media (max-width: 600px) { h1 { font-size: 1.3rem !important; } .hide-mobile { display: none; } }
     </style>
 </head>
-
 <body>
     <div class="container">
         <div class="header">
             <div>
-                <h1 style="margin:0; font-size: 1.6rem; letter-spacing: -1px;">VN30 <span style="color:var(--blue)">SMART FORECAST</span></h1>
+                <h1 style="margin:0; font-size: 1.6rem;">VN30 <span style="color:var(--blue)">SMART FORECAST</span></h1>
                 <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Last Update / Cập nhật: --</div>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
-                <button class="btn-donate" onclick="openModal('donate')">☕ Buy me a Coffee / Mời cafe ❤️</button>
-            </div>
+            <button class="btn-donate" onclick="openModal('donate')">☕ Mời cafe ❤️</button>
         </div>
-
         <div class="controls-bar">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search ticker or volatility / Tìm mã hoặc biến động..." onkeyup="filterAndRender()">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search ticker / Tìm mã..." onkeyup="filterAndRender()">
             <select id="filterSelect" class="filter-select" onchange="filterAndRender()">
-                <option value="ALL">All Signals / Tất cả dự báo</option>
+                <option value="ALL">All Signals / Tất cả</option>
                 <option value="MUA">BUY / MUA</option>
                 <option value="BÁN">SELL / BÁN</option>
-                <option value="GIỮ">HOLD / GIỮ</option>
-                <option value="DANG-PHAN-TICH">Analyzing / Đang phân tích</option>
+                <option value="THEO-DÕI">WATCH / THEO DÕI</option>
             </select>
         </div>
-
         <div class="market-stats">
-            <div class="stat-box">
-                <div style="color:var(--text-dim); font-size: 0.65rem;">TOP MOVER / BIẾN ĐỘNG</div>
-                <div class="stat-val" id="top-ticker" style="color:var(--blue)">--</div>
-            </div>
-            <div class="stat-box">
-                <div style="color:var(--text-dim); font-size: 0.65rem;">GAINERS / MÃ TĂNG</div>
-                <div class="stat-val" style="color:var(--up)" id="count-up">0</div>
-            </div>
-            <div class="stat-box">
-                <div style="color:var(--text-dim); font-size: 0.65rem;">LOSERS / MÃ GIẢM</div>
-                <div class="stat-val" style="color:var(--down)" id="count-down">0</div>
-            </div>
+            <div class="stat-box"><div>TOP MOVER</div><div class="stat-val" id="top-ticker" style="color:var(--blue)">--</div></div>
+            <div class="stat-box"><div>GAINERS</div><div class="stat-val up" id="count-up">0</div></div>
+            <div class="stat-box"><div>LOSERS</div><div class="stat-val down" id="count-down">0</div></div>
         </div>
-
-        <div style="background: var(--blue); padding: 25px 12px; border-radius: 10px; font-size: 1.0rem; font-weight: 700; white-space: nowrap; text-align: center; margin: 20px 0;">
+        <div style="background: var(--blue); padding: 20px; border-radius: 10px; font-weight: 700; text-align: center; margin: 20px 0;">
             Next Session Forecast / Dự báo phiên: <span id="forecast-target">--</span>
         </div>
-
         <div class="table-container">
             <table>
-                <thead>
-                    <tr>
-                        <th>Ticker / Mã</th>
-                        <th>Price / Giá</th>
-                        <th>Change / Biến Động</th>
-                        <th>AI Signal</th>
-                        <th class="hide-mobile">Confidence / Tin Cậy</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Ticker</th><th>Price</th><th>Change</th><th>AI Signal</th><th class="hide-mobile">Confidence</th></tr></thead>
                 <tbody id="stock-tbody"></tbody>
             </table>
-            <div class="expand-container" id="expand-box">
-                <button class="btn-expand" onclick="toggleExpand()">Show All / Xem thêm</button>
-            </div>
         </div>
     </div>
 
     <div id="donate-modal" class="modal" onclick="closeModal('donate')">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <p style="font-weight: 700; margin-bottom: 15px;">Support AI Dashboard ❤️</p>
-            <img src="https://raw.githubusercontent.com/9dpi/thantoan/refs/heads/main/qr-code-tech.jpg" alt="QR Donate" style="width: 100%; border-radius: 12px;">
-            <button class="close-btn" style="background:#f1f2f6; border:none; padding:10px 20px; border-radius:10px; margin-top:10px; cursor:pointer;" onclick="closeModal('donate')">Close / Đóng</button>
+        <div style="background:white; padding:20px; border-radius:20px; text-align:center;">
+            <img src="https://raw.githubusercontent.com/9dpi/thantoan/refs/heads/main/qr-code-tech.jpg" style="width:250px; border-radius:12px;">
+            <p><button onclick="closeModal('donate')">Đóng</button></p>
         </div>
     </div>
-
     <div id="chart-modal" class="modal" onclick="closeModal('chart')">
         <div class="chart-modal-content" onclick="event.stopPropagation()">
-            <div id="chart-container" style="width: 100%; height: 350px;"></div>
-            <div style="text-align: center;">
-                <button class="close-btn" style="background:#1a1f2e; color:white; border:1px solid #333; padding:10px 20px; border-radius:10px; cursor:pointer;" onclick="closeModal('chart')">Close Chart / Đóng</button>
-            </div>
+            <div id="chart-container"></div>
+            <p style="text-align:center"><button onclick="closeModal('chart')">Đóng biểu đồ</button></p>
         </div>
     </div>
 
     <script>
-        // BẢO MẬT: Khóa chuột phải và phím chức năng
-        window.addEventListener('contextmenu', function (e) { e.preventDefault(); }, false);
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || (e.ctrlKey && (e.keyCode == 85 || e.keyCode == 83))) {
-                return false;
-            }
-        };
+        // BẢO MẬT CAO: Khóa chuột phải và F12
+        window.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = e => { if (e.keyCode==123 || (e.ctrlKey && e.shiftKey && e.keyCode==73) || (e.ctrlKey && e.keyCode==85)) return false; };
 
-        let fullData = []; let chartInstance = null; let isExpanded = false;
-
+        let fullData = []; let chartInstance = null;
         function openModal(id) { document.getElementById(id + '-modal').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id + '-modal').style.display = 'none'; }
-
-        function toggleExpand() {
-            isExpanded = true;
-            document.getElementById('expand-box').style.display = 'none';
-            filterAndRender();
-        }
-
-        function getNextTradingDate() {
-            let d = new Date();
-            if (d.getHours() >= 15) d.setDate(d.getDate() + 1);
-            while (d.getDay() === 0 || d.getDay() === 6) { d.setDate(d.getDate() + 1); }
-            return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }
 
         async function fetchData() {
             try {
                 const res = await fetch(`./data.json?t=${new Date().getTime()}`);
                 const data = await res.json();
                 fullData = data.stocks || [];
-                document.getElementById('last-update').innerText = `Last Update / Cập nhật: ${data.update_time || '--'}`;
-                document.getElementById('forecast-target').innerText = getNextTradingDate();
-                fullData.sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
+                document.getElementById('last-update').innerText = `Last Update / Cập nhật: ${data.update_time}`;
+                document.getElementById('forecast-target').innerText = data.forecast_for;
                 filterAndRender();
-            } catch (e) { document.getElementById('forecast-target').innerText = getNextTradingDate(); }
+            } catch (e) { console.error(e); }
         }
 
         function filterAndRender() {
@@ -171,42 +112,20 @@
             const filter = document.getElementById('filterSelect').value;
             const tbody = document.getElementById('stock-tbody');
             tbody.innerHTML = '';
-
-            const filtered = fullData.filter(s => {
-                const matchSearch = s.s.includes(search);
-                const matchFilter = (filter === 'ALL') || (s.f.replace(' ', '-') === filter);
-                return matchSearch && matchFilter;
-            });
-
-            const displayData = isExpanded ? filtered : filtered.slice(0, 10);
-            let up = 0; let down = 0;
+            let up = 0, down = 0;
             
-            fullData.forEach(s => { if (s.c > 0) up++; else if (s.c < 0) down++; });
-
-            displayData.forEach((s, idx) => {
+            const filtered = fullData.filter(s => s.s.includes(search) && (filter==='ALL' || s.f.replace(' ','-')===filter));
+            filtered.slice(0, 15).forEach((s, idx) => {
+                if (s.c > 0) up++; else if (s.c < 0) down++;
                 if (idx === 0) document.getElementById('top-ticker').innerText = s.s;
-                
-                // Dịch nhãn Signal sang tiếng Anh
-                let engSignal = s.f;
-                if(s.f === 'MUA') engSignal = 'BUY / MUA';
-                if(s.f === 'BÁN') engSignal = 'SELL / BÁN';
-                if(s.f === 'GIỮ') engSignal = 'HOLD / GIỮ';
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span class="ticker-name" onclick="showChart('${s.s}')">${s.s}</span></td>
-                        <td style="font-family: 'JetBrains Mono'">${s.p > 0 ? s.p.toLocaleString() : '---'}</td>
-                        <td class="${s.c > 0 ? 'up' : s.c < 0 ? 'down' : ''}" style="font-weight:700">
-                            ${s.c !== 0 ? (s.c > 0 ? '▲' : '▼') + ' ' + Math.abs(s.c) + '%' : '---'}
-                        </td>
-                        <td><span class="tag tag-${s.f.replace(' ', '-')}">${engSignal}</span></td>
-                        <td class="hide-mobile">
-                            <div style="width: 70px; background: #1a1f2e; height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: ${s.conf}%; background: var(--blue); height: 100%;"></div>
-                            </div>
-                            <span style="font-size: 0.65rem; color: var(--text-dim)">${s.conf > 0 ? s.conf + '%' : '--'}</span>
-                        </td>
-                    </tr>`;
+                let sig = s.f === 'MUA' ? 'BUY / MUA' : (s.f === 'BÁN' ? 'SELL / BÁN' : 'WATCH / THEO DÕI');
+                tbody.innerHTML += `<tr>
+                    <td><span class="ticker-name" onclick="showChart('${s.s}')">${s.s}</span></td>
+                    <td>${s.p.toLocaleString()}</td>
+                    <td class="${s.c>0?'up':'down'}"><b>${s.c>0?'▲':'▼'} ${Math.abs(s.c)}%</b></td>
+                    <td><span class="tag tag-${s.f.replace(' ','-')}">${sig}</span></td>
+                    <td class="hide-mobile"><div style="width:70px;background:#1a1f2e;height:5px;border-radius:3px;overflow:hidden"><div style="width:${s.conf}%;background:var(--blue);height:100%"></div></div></td>
+                </tr>`;
             });
             document.getElementById('count-up').innerText = up;
             document.getElementById('count-down').innerText = down;
@@ -214,21 +133,18 @@
 
         function showChart(symbol) {
             const stock = fullData.find(x => x.s === symbol);
-            if (!stock || !stock.chart_data) return alert("No chart data available");
+            if (!stock) return;
             openModal('chart');
             const options = {
                 series: [{ data: stock.chart_data }],
-                chart: { type: 'candlestick', height: 350, background: 'transparent', theme: 'dark', toolbar: { show: false } },
-                xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } } },
-                yaxis: { labels: { style: { colors: '#94a3b8' } } },
-                theme: { mode: 'dark' },
+                chart: { type: 'candlestick', height: 350, theme: 'dark', toolbar: { show: false } },
+                xaxis: { type: 'datetime' },
                 plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' } } }
             };
             if (chartInstance) chartInstance.destroy();
             chartInstance = new ApexCharts(document.querySelector("#chart-container"), options);
             chartInstance.render();
         }
-
         fetchData(); setInterval(fetchData, 60000);
     </script>
 </body>

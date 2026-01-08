@@ -1,5 +1,5 @@
 import json, requests, time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 def fetch_yahoo(s):
     try:
@@ -15,7 +15,6 @@ def fetch_yahoo(s):
             if len(close_p) >= 2:
                 last_p, prev_p = close_p[-1], close_p[-2]
                 change = round(((last_p - prev_p) / prev_p) * 100, 2)
-                # Lấy dữ liệu chart cho nến
                 quote = data.get('indicators', {}).get('quote', [])[0]
                 timestamps = data.get('timestamp', [])
                 ohlc = []
@@ -49,18 +48,23 @@ def get_market_data():
 
     if results:
         results.sort(key=lambda x: abs(x['c']), reverse=True)
-        now = datetime.now()
-        f_date = now + timedelta(days=1)
+        
+        # FIX MÚI GIỜ VIỆT NAM (UTC+7)
+        vn_tz = timezone(timedelta(hours=7))
+        now_vn = datetime.now(vn_tz)
+        
+        # Nếu đã sau 15:00, dự báo dành cho ngày giao dịch tiếp theo
+        f_date = now_vn + timedelta(days=1) if now_vn.hour >= 15 else now_vn
         while f_date.weekday() >= 5: f_date += timedelta(days=1)
 
         output = {
-            "update_time": now.strftime("%H:%M - %d/%m/%Y"),
+            "update_time": now_vn.strftime("%H:%M - %d/%m/%Y"),
             "forecast_for": f_date.strftime("%d/%m/%Y"),
             "stocks": results
         }
         with open('data.json', 'w', encoding='utf-8') as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
-        print("--- BUILD THÀNH CÔNG ---")
+        print(f"--- BUILD THÀNH CÔNG: {output['forecast_for']} ---")
 
 if __name__ == "__main__":
     get_market_data()
